@@ -9,7 +9,7 @@ public class ConexaoBanco {
         try {
             String url = "jdbc:mysql://localhost:3306/jerseyhub";
             String usuario = "root";
-            String senha = "sua_senha"; 
+            String senha = "luiz1323"; 
 
             conexao = DriverManager.getConnection(url, usuario, senha);
         } catch (SQLException e) {
