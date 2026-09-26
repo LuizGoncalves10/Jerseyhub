@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Dashboard extends JFrame {
@@ -19,7 +20,11 @@ public class Dashboard extends JFrame {
         JButton btnInserirCliente = new JButton("Inserir Cliente");
         JButton btnEditarCliente = new JButton("Editar Cliente");
         JButton btnExcluirCliente = new JButton("Excluir Cliente");
+        
         btnInserirCliente.addActionListener(e -> inserirCliente());
+        btnEditarCliente.addActionListener(e -> editarClientePorCpf());
+        btnExcluirCliente.addActionListener(e -> excluirClientePorCpf());
+
         painelClientes.add(btnInserirCliente);
         painelClientes.add(btnEditarCliente);
         painelClientes.add(btnExcluirCliente);
@@ -82,6 +87,90 @@ public class Dashboard extends JFrame {
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
             }
+        }
+    }
+
+    private void editarClientePorCpf() {
+        String cpfBusca = JOptionPane.showInputDialog(this, "Digite o CPF do cliente que deseja editar:");
+        if (cpfBusca == null || cpfBusca.trim().isEmpty()) return;
+
+        String sqlBusca = "SELECT * FROM Cliente WHERE cpf = ?";
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmtBusca = conexao.prepareStatement(sqlBusca)) {
+            stmtBusca.setString(1, cpfBusca);
+            ResultSet rs = stmtBusca.executeQuery();
+
+            if (!rs.next()) {
+                JOptionPane.showMessageDialog(this, "Erro: Cliente com o CPF informado não foi encontrado.");
+                return;
+            }
+
+            String nomeAtual = rs.getString("nome");
+            String cpfAtual = rs.getString("cpf");
+            String ruaAtual = rs.getString("rua");
+            String bairroAtual = rs.getString("bairro");
+            int numeroAtual = rs.getInt("numero");
+            String cepAtual = rs.getString("cep");
+
+            String nome = JOptionPane.showInputDialog(this, "Nome:", nomeAtual);
+            String cpf = JOptionPane.showInputDialog(this, "CPF:", cpfAtual);
+            String rua = JOptionPane.showInputDialog(this, "Rua:", ruaAtual);
+            String bairro = JOptionPane.showInputDialog(this, "Bairro:", bairroAtual);
+            String numeroStr = JOptionPane.showInputDialog(this, "Numero:", String.valueOf(numeroAtual));
+            String cep = JOptionPane.showInputDialog(this, "CEP:", cepAtual);
+
+            if (nome != null && cpf != null && rua != null && bairro != null && numeroStr != null && cep != null) {
+                String sqlUpdate = "UPDATE Cliente SET nome = ?, cpf = ?, rua = ?, bairro = ?, numero = ?, cep = ? WHERE cpf = ?";
+                try (PreparedStatement stmtUpdate = conexao.prepareStatement(sqlUpdate)) {
+                    stmtUpdate.setString(1, nome);
+                    stmtUpdate.setString(2, cpf);
+                    stmtUpdate.setString(3, rua);
+                    stmtUpdate.setString(4, bairro);
+                    stmtUpdate.setInt(5, Integer.parseInt(numeroStr));
+                    stmtUpdate.setString(6, cep);
+                    stmtUpdate.setString(7, cpfBusca);
+                    stmtUpdate.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Cliente atualizado com sucesso!");
+                }
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Erro: O campo numero deve conter apenas valores inteiros positivos.");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao atualizar: " + ex.getMessage());
+        }
+    }
+
+    private void excluirClientePorCpf() {
+        String cpfBusca = JOptionPane.showInputDialog(this, "Digite o CPF do cliente que deseja excluir:");
+        if (cpfBusca == null || cpfBusca.trim().isEmpty()) return;
+
+        String sqlBusca = "SELECT nome FROM Cliente WHERE cpf = ?";
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmtBusca = conexao.prepareStatement(sqlBusca)) {
+            stmtBusca.setString(1, cpfBusca);
+            ResultSet rs = stmtBusca.executeQuery();
+
+            if (!rs.next()) {
+                JOptionPane.showMessageDialog(this, "Erro: Cliente com o CPF informado não foi encontrado.");
+                return;
+            }
+
+            String nomeCliente = rs.getString("nome");
+            int confirmacao = JOptionPane.showConfirmDialog(this, 
+                "Deseja confirmar a exclusão do cliente: " + nomeCliente + " (CPF: " + cpfBusca + ")?", 
+                "Confirmação de Exclusão", 
+                JOptionPane.YES_NO_OPTION);
+
+            if (confirmacao == JOptionPane.YES_OPTION) {
+                String sqlDelete = "DELETE FROM Cliente WHERE cpf = ?";
+                try (PreparedStatement stmtDelete = conexao.prepareStatement(sqlDelete)) {
+                    stmtDelete.setString(1, cpfBusca);
+                    stmtDelete.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Cliente excluído com sucesso!");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao excluir: " + ex.getMessage());
         }
     }
 
