@@ -59,18 +59,26 @@ public class Dashboard extends JFrame {
 
     private void inserirCliente() {
         String nome = JOptionPane.showInputDialog(this, "Nome:");
-        String cpf = JOptionPane.showInputDialog(this, "CPF:");
+        String cpf = JOptionPane.showInputDialog(this, "CPF (11 digitos, apenas numeros):");
+        String rua = JOptionPane.showInputDialog(this, "Rua:");
         String bairro = JOptionPane.showInputDialog(this, "Bairro:");
+        String numeroStr = JOptionPane.showInputDialog(this, "Numero:");
+        String cep = JOptionPane.showInputDialog(this, "CEP (8 digitos, apenas numeros):");
 
-        if (nome != null && cpf != null && bairro != null) {
-            String sql = "INSERT INTO Cliente (nome, cpf, bairro) VALUES (?, ?, ?)";
+        if (nome != null && cpf != null && rua != null && bairro != null && numeroStr != null && cep != null) {
+            String sql = "INSERT INTO Cliente (nome, cpf, rua, bairro, numero, cep) VALUES (?, ?, ?, ?, ?, ?)";
             try (Connection conexao = ConexaoBanco.conectar();
                  PreparedStatement stmt = conexao.prepareStatement(sql)) {
                 stmt.setString(1, nome);
                 stmt.setString(2, cpf);
-                stmt.setString(3, bairro);
+                stmt.setString(3, rua);
+                stmt.setString(4, bairro);
+                stmt.setInt(5, Integer.parseInt(numeroStr));
+                stmt.setString(6, cep);
                 stmt.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Sucesso!");
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Erro: O campo numero deve conter apenas valores inteiros positivos.");
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
             }
