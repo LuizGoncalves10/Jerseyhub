@@ -1,11 +1,17 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Vector;
 
 public class Dashboard extends JFrame {
+
+    private JComboBox<String> comboConsultas;
+    private JTable tabelaResultados;
 
     public Dashboard() {
         setTitle("Jerseyhub - Dashboard");
@@ -46,12 +52,15 @@ public class Dashboard extends JFrame {
         JPanel painelConsultas = new JPanel(new BorderLayout());
         JPanel menuConsultas = new JPanel();
         String[] opcoes = {"Selecione", "Maior Receita", "Acima da Media", "Relatorio", "Estoque"};
-        JComboBox<String> comboConsultas = new JComboBox<>(opcoes);
+        comboConsultas = new JComboBox<>(opcoes);
         JButton btnRodarConsulta = new JButton("Executar");
+        
+        btnRodarConsulta.addActionListener(e -> executarConsulta());
+
         menuConsultas.add(new JLabel("Visualizacao:"));
         menuConsultas.add(comboConsultas);
         menuConsultas.add(btnRodarConsulta);
-        JTable tabelaResultados = new JTable(10, 4);
+        tabelaResultados = new JTable();
         painelConsultas.add(menuConsultas, BorderLayout.NORTH);
         painelConsultas.add(new JScrollPane(tabelaResultados), BorderLayout.CENTER);
 
@@ -309,6 +318,51 @@ public class Dashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "Erro: O ID informado deve ser um número inteiro.");
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao excluir: " + ex.getMessage());
+        }
+    }
+
+    private void executarConsulta() {
+        String selecao = (String) comboConsultas.getSelectedItem();
+        String sql = "";
+
+        if ("Maior Receita".equals(selecao)) {
+            sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, SUM(ip.subtotal_item) AS Receita_Total FROM Item_Pedido ip JOIN Camisa c ON ip.fk_id_camisa = c.id_camisa LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe GROUP BY e.nome ORDER BY Receita_Total DESC";
+        } else if ("Acima da Media".equals(selecao)) {
+            sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.preco AS Preco FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.preco > (SELECT AVG(preco) FROM Camisa)";
+        } else if ("Relatorio".equals(selecao)) {
+            sql = "SELECT p.id_pedido AS Pedido, cl.nome AS Cliente, p.data_compra AS Data, p.valor_total AS Total FROM Pedido p JOIN Cliente cl ON p.fk_id_cliente = cl.id_cliente";
+        } else if ("Estoque".equals(selecao)) {
+            sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho as Tamanho, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.quantidade_estoque DESC";
+        } else {
+            JOptionPane.showMessageDialog(this, "Selecione uma consulta válida.");
+            return;
+        }
+
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmt = conexao.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            Vector<String> colunas = new Vector<>();
+            
+            for (int i = 1; i <= columnCount; i++) {
+                colunas.add(metaData.getColumnName(i));
+            }
+
+            Vector<Vector<Object>> dados = new Vector<>();
+            while (rs.next()) {
+                Vector<Object> linha = new Vector<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    linha.add(rs.getObject(i));
+                }
+                dados.add(linha);
+            }
+
+            tabelaResultados.setModel(new DefaultTableModel(dados, colunas));
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao executar consulta: " + ex.getMessage());
         }
     }
 
