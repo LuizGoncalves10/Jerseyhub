@@ -52,7 +52,18 @@ public class Dashboard extends JFrame {
 
         JPanel painelConsultas = new JPanel(new BorderLayout());
         JPanel menuConsultas = new JPanel();
-        String[] opcoes = {"Selecione", "Maior Receita", "Acima da Media", "Relatorio", "Estoque"};
+        String[] opcoes = {
+            "Selecione", 
+            "Clientes TOP", 
+            "Acima da Media", 
+            "Relatorio", 
+            "Estoque",
+            "Clientes Frequentes",
+            "Camisas Sem Venda",
+            "Ticket Medio",
+            "Camisa Mais Cara",
+            "Clientes Sem Compras"
+        };
         comboConsultas = new JComboBox<>(opcoes);
         JButton btnRodarConsulta = new JButton("Executar");
         
@@ -337,14 +348,24 @@ public class Dashboard extends JFrame {
         String selecao = (String) comboConsultas.getSelectedItem();
         String sql = "";
 
-        if ("Maior Receita".equals(selecao)) {
-            sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, SUM(ip.subtotal_item) AS Receita_Total FROM Item_Pedido ip JOIN Camisa c ON ip.fk_id_camisa = c.id_camisa LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe GROUP BY e.nome ORDER BY Receita_Total DESC";
+        if ("Clientes TOP".equals(selecao)) {
+            sql = "SELECT cl.nome AS Cliente, SUM(p.valor_total) AS Total_Gasto FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome HAVING SUM(p.valor_total) > (SELECT AVG(valor_total) FROM Pedido)";
         } else if ("Acima da Media".equals(selecao)) {
             sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.preco AS Preco FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.preco > (SELECT AVG(preco) FROM Camisa)";
         } else if ("Relatorio".equals(selecao)) {
             sql = "SELECT p.id_pedido AS Pedido, cl.nome AS Cliente, p.data_compra AS Data, p.valor_total AS Total FROM Pedido p JOIN Cliente cl ON p.fk_id_cliente = cl.id_cliente";
         } else if ("Estoque".equals(selecao)) {
             sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho as Tamanho, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.quantidade_estoque DESC";
+        } else if ("Clientes Frequentes".equals(selecao)) {
+            sql = "SELECT cl.nome AS Cliente, COUNT(p.id_pedido) AS Total_Pedidos FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome HAVING COUNT(p.id_pedido) > 0 ORDER BY Total_Pedidos DESC";
+        } else if ("Camisas Sem Venda".equals(selecao)) {
+            sql = "SELECT c.modelo AS Modelo, c.versao AS Versao, c.preco AS Preco FROM Camisa c WHERE c.id_camisa NOT IN (SELECT fk_id_camisa FROM Item_Pedido)";
+        } else if ("Ticket Medio".equals(selecao)) {
+            sql = "SELECT cl.nome AS Cliente, AVG(p.valor_total) AS Ticket_Medio FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome ORDER BY Ticket_Medio DESC";
+        } else if ("Camisa Mais Cara".equals(selecao)) {
+            sql = "SELECT e.nome AS Equipe, c.modelo AS Modelo, c.preco AS Preco FROM Camisa c JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.preco = (SELECT MAX(preco) FROM Camisa c2 WHERE c2.fk_id_equipe = e.id_equipe)";
+        } else if ("Clientes Sem Compras".equals(selecao)) {
+            sql = "SELECT cl.nome AS Cliente, cl.cpf AS CPF FROM Cliente cl WHERE cl.id_cliente NOT IN (SELECT fk_id_cliente FROM Pedido)";
         } else {
             JOptionPane.showMessageDialog(this, "Selecione uma consulta válida.");
             return;
