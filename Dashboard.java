@@ -1,11 +1,12 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 public class Dashboard extends JFrame {
@@ -65,8 +66,16 @@ public class Dashboard extends JFrame {
         painelConsultas.add(new JScrollPane(tabelaResultados), BorderLayout.CENTER);
 
         JPanel painelEstatistica = new JPanel(new BorderLayout());
-        JLabel labelGrafico = new JLabel("Grafico de Estatistica vira aqui", SwingConstants.CENTER);
-        painelEstatistica.add(labelGrafico, BorderLayout.CENTER);
+        JButton btnAtualizarEstatistica = new JButton("Atualizar Estatísticas");
+        JTextArea areaEstatisticas = new JTextArea();
+        areaEstatisticas.setEditable(false);
+        areaEstatisticas.setFont(new Font("Monospaced", Font.BOLD, 14));
+        areaEstatisticas.setMargin(new Insets(20, 20, 20, 20));
+        
+        btnAtualizarEstatistica.addActionListener(e -> atualizarEstatisticas(areaEstatisticas));
+        
+        painelEstatistica.add(btnAtualizarEstatistica, BorderLayout.NORTH);
+        painelEstatistica.add(new JScrollPane(areaEstatisticas), BorderLayout.CENTER);
 
         painelAbas.addTab("Clientes", painelClientes);
         painelAbas.addTab("Camisas", painelCamisas);
@@ -76,6 +85,7 @@ public class Dashboard extends JFrame {
         add(painelAbas);
     }
 
+    //crod de clientes
     private void inserirCliente() {
         String nome = JOptionPane.showInputDialog(this, "Nome:");
         String cpf = JOptionPane.showInputDialog(this, "CPF (11 digitos, apenas numeros):");
@@ -188,6 +198,7 @@ public class Dashboard extends JFrame {
         }
     }
 
+    //crod de camisas
     private void inserirCamisa() {
         String modelo = JOptionPane.showInputDialog(this, "Modelo:");
         String versao = JOptionPane.showInputDialog(this, "Versão (Torcedor ou Jogador):");
@@ -321,6 +332,7 @@ public class Dashboard extends JFrame {
         }
     }
 
+    //consultas
     private void executarConsulta() {
         String selecao = (String) comboConsultas.getSelectedItem();
         String sql = "";
@@ -363,6 +375,139 @@ public class Dashboard extends JFrame {
 
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao executar consulta: " + ex.getMessage());
+        }
+    }
+
+    //estatisticas
+    private void atualizarEstatisticas(JTextArea areaEstatisticas) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== ESTATÍSTICAS DO SISTEMA JERSEYHUB ===\n\n");
+
+        try (Connection conexao = ConexaoBanco.conectar()) {
+            
+            try (PreparedStatement stmt = conexao.prepareStatement("SELECT COUNT(*) AS total FROM Cliente");
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) sb.append("Total de Clientes Cadastrados: ").append(rs.getInt("total")).append("\n");
+            }
+
+            try (PreparedStatement stmt = conexao.prepareStatement("SELECT COUNT(*) AS total FROM Camisa");
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) sb.append("Modelos de Camisas Cadastrados: ").append(rs.getInt("total")).append("\n");
+            }
+
+            try (PreparedStatement stmt = conexao.prepareStatement("SELECT SUM(quantidade_estoque) AS total FROM Camisa");
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) sb.append("Total de Peças em Estoque: ").append(rs.getInt("total")).append("\n\n");
+            }
+
+            List<Double> precos = new ArrayList<>();
+            List<Integer> estoques = new ArrayList<>();
+            Map<Double, Integer> freqPrecos = new HashMap<>();
+            Map<String, Integer> freqTamanhos = new HashMap<>();
+            
+            try (PreparedStatement stmt = conexao.prepareStatement("SELECT preco, quantidade_estoque, tamanho FROM Camisa");
+                 ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    double p = rs.getDouble("preco");
+                    int e = rs.getInt("quantidade_estoque");
+                    String t = rs.getString("tamanho");
+                    
+                    precos.add(p);
+                    estoques.add(e);
+                    
+                    freqPrecos.put(p, freqPrecos.getOrDefault(p, 0) + 1);
+                    freqTamanhos.put(t, freqTamanhos.getOrDefault(t, 0) + 1);
+                }
+            }
+
+            if (!precos.isEmpty()) {
+                Collections.sort(precos);
+                int n = precos.size();
+                
+                double somaPrecos = 0;
+                for (double p : precos) somaPrecos += p;
+                double mediaPreco = somaPrecos / n;
+                
+                double modaPreco = precos.get(0);
+                int maxFreq = 0;
+                for (Map.Entry<Double, Integer> entry : freqPrecos.entrySet()) {
+                    if (entry.getValue() > maxFreq) {
+                        maxFreq = entry.getValue();
+                        modaPreco = entry.getKey();
+                    }
+                }
+                
+                String modaTamanho = "";
+                int maxFreqT = 0;
+                for (Map.Entry<String, Integer> entry : freqTamanhos.entrySet()) {
+                    if (entry.getValue() > maxFreqT) {
+                        maxFreqT = entry.getValue();
+                        modaTamanho = entry.getKey();
+                    }
+                }
+
+                double min = precos.get(0);
+                double max = precos.get(n - 1);
+                double q2 = calcularMediana(precos, 0, n - 1);
+                double q1 = calcularMediana(precos, 0, n / 2 - 1);
+                double q3 = calcularMediana(precos, n / 2 + (n % 2 == 0 ? 0 : 1), n - 1);
+
+                double somaDiferencasPreco = 0;
+                for (double p : precos) {
+                    somaDiferencasPreco += Math.pow(p - mediaPreco, 2);
+                }
+                double desvioPadraoPreco = Math.sqrt(somaDiferencasPreco / n);
+
+                sb.append("--- COMPORTAMENTO DOS PREÇOS ---\n");
+                sb.append(String.format("Média de Preço: R$ %.2f\n", mediaPreco));
+                sb.append(String.format("Moda de Preço (Mais comum): R$ %.2f\n", modaPreco));
+                sb.append(String.format("Desvio Padrão: R$ %.2f\n", desvioPadraoPreco));
+                sb.append("Tamanho na Moda (Mais cadastrado): ").append(modaTamanho).append("\n\n");
+                
+                sb.append("--- DADOS PARA BOXPLOT (PREÇOS) ---\n");
+                sb.append(String.format("Mínimo: R$ %.2f\n", min));
+                sb.append(String.format("1º Quartil (Q1): R$ %.2f\n", q1));
+                sb.append(String.format("Mediana (Q2): R$ %.2f\n", q2));
+                sb.append(String.format("3º Quartil (Q3): R$ %.2f\n", q3));
+                sb.append(String.format("Máximo: R$ %.2f\n\n", max));
+
+                double somaEstoque = 0;
+                for (int e : estoques) somaEstoque += e;
+                double mediaEstoque = somaEstoque / n;
+                
+                double somaDiferencasEstoque = 0;
+                for (int e : estoques) {
+                    somaDiferencasEstoque += Math.pow(e - mediaEstoque, 2);
+                }
+                double desvioPadraoEstoque = Math.sqrt(somaDiferencasEstoque / n);
+                
+                double margemErro = 1.96 * (desvioPadraoEstoque / Math.sqrt(n));
+                double limiteInferior = mediaEstoque - margemErro;
+                double limiteSuperior = mediaEstoque + margemErro;
+
+                sb.append("--- INTERVALO DE CONFIANÇA DO ESTOQUE ---\n");
+                sb.append(String.format("Média de peças por modelo: %.1f\n", mediaEstoque));
+                sb.append(String.format("Com 95%% de confiança, a média populacional de estoque\n"));
+                sb.append(String.format("está entre %.1f e %.1f unidades por modelo.\n", limiteInferior, limiteSuperior));
+            } else {
+                sb.append("Não há camisas cadastradas para gerar cálculos estatísticos.\n");
+            }
+
+        } catch (SQLException ex) {
+            sb.append("Erro ao carregar estatísticas: ").append(ex.getMessage());
+        }
+
+        areaEstatisticas.setText(sb.toString());
+    }
+
+    private double calcularMediana(List<Double> valores, int inicio, int fim) {
+        if (inicio > fim || inicio < 0 || fim >= valores.size()) return 0.0;
+        int tamanho = fim - inicio + 1;
+        int meio = inicio + tamanho / 2;
+        if (tamanho % 2 == 0) {
+            return (valores.get(meio - 1) + valores.get(meio)) / 2.0;
+        } else {
+            return valores.get(meio);
         }
     }
 
