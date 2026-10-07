@@ -9,7 +9,7 @@ O sistema é dividido em quatro abas principais através de um painel de navega�
 * **Gestão de Clientes:** Permite realizar o CRUD (Criar, Ler, Atualizar e Eliminar) de clientes de forma intuitiva, utilizando o CPF como chave de identificação.
 * **Gestão de Camisas:** Controle completo do catálogo, permitindo inserir, editar e remover modelos de camisas, registando informações como versão (Torcedor/Jogador), tamanho, preço, ano, equipe e quantidade em estoque.
 * **Consultas Avançadas:** Módulo para execução de consultas complexas no banco de dados, incluindo junções (JOINs) e subconsultas. Inclui visualizações como:
-* Maior Receita (agrupada por equipe).
+* Clientes Frequentes.
 * Camisas com preço acima da média.
 * Relatório geral de pedidos.
 * Situação detalhada do estoque.
