@@ -1,6 +1,10 @@
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,52 +15,71 @@ import java.util.Vector;
 
 public class Dashboard extends JFrame {
 
+    //cores da interface
+    private static final Color COR_PRIMARIA = new Color(20, 83, 45);
+    private static final Color COR_SUCESSO = new Color(34, 139, 84);
+    private static final Color COR_EDICAO = new Color(41, 98, 168);
+    private static final Color COR_PERIGO = new Color(192, 57, 43);
+    private static final Color COR_NEUTRA = new Color(108, 117, 125);
+    private static final Color COR_FUNDO = new Color(244, 246, 248);
+    private static final Color COR_LINHA_ALTERNADA = new Color(240, 246, 242);
+
+    private static final String SQL_LISTA_CLIENTES = "SELECT id_cliente AS ID, nome AS Nome, cpf AS CPF, rua AS Rua, numero AS Numero, bairro AS Bairro, cep AS CEP FROM Cliente ORDER BY nome";
+    private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.id_camisa";
+
     private JComboBox<String> comboConsultas;
     private JTable tabelaResultados;
+    private JTable tabelaClientes;
+    private JTable tabelaCamisas;
+    private JLabel lblDescricaoConsulta;
+    private JLabel lblTotalRegistros;
 
     public Dashboard() {
         setTitle("Jerseyhub - Dashboard");
-        setSize(800, 600);
+        setSize(1000, 680);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JTabbedPane painelAbas = new JTabbedPane();
 
-        JPanel painelClientes = new JPanel();
-        painelClientes.add(new JLabel("Gerenciamento de Clientes:"));
-        JButton btnInserirCliente = new JButton("Inserir Cliente");
-        JButton btnEditarCliente = new JButton("Editar Cliente");
-        JButton btnExcluirCliente = new JButton("Excluir Cliente");
-        
+        JPanel painelClientes = criarPainelBase();
+        JButton btnInserirCliente = criarBotao("+ Inserir Cliente", COR_SUCESSO);
+        JButton btnEditarCliente = criarBotao("Editar Cliente", COR_EDICAO);
+        JButton btnExcluirCliente = criarBotao("Excluir Cliente", COR_PERIGO);
+        JButton btnAtualizarClientes = criarBotao("Atualizar", COR_NEUTRA);
+
         btnInserirCliente.addActionListener(e -> inserirCliente());
         btnEditarCliente.addActionListener(e -> editarClientePorCpf());
         btnExcluirCliente.addActionListener(e -> excluirClientePorCpf());
+        btnAtualizarClientes.addActionListener(e -> atualizarListaClientes());
 
-        painelClientes.add(btnInserirCliente);
-        painelClientes.add(btnEditarCliente);
-        painelClientes.add(btnExcluirCliente);
+        tabelaClientes = criarTabela();
+        painelClientes.add(criarBarraTopo("Gerenciamento de Clientes",
+            btnInserirCliente, btnEditarCliente, btnExcluirCliente, btnAtualizarClientes), BorderLayout.NORTH);
+        painelClientes.add(criarRolagem(tabelaClientes), BorderLayout.CENTER);
 
-        JPanel painelCamisas = new JPanel();
-        painelCamisas.add(new JLabel("Gerenciamento de Camisas:"));
-        JButton btnInserirCamisa = new JButton("Inserir Camisa");
-        JButton btnEditarCamisa = new JButton("Editar Camisa");
-        JButton btnExcluirCamisa = new JButton("Excluir Camisa");
-        
+        JPanel painelCamisas = criarPainelBase();
+        JButton btnInserirCamisa = criarBotao("+ Inserir Camisa", COR_SUCESSO);
+        JButton btnEditarCamisa = criarBotao("Editar Camisa", COR_EDICAO);
+        JButton btnExcluirCamisa = criarBotao("Excluir Camisa", COR_PERIGO);
+        JButton btnAtualizarCamisas = criarBotao("Atualizar", COR_NEUTRA);
+
         btnInserirCamisa.addActionListener(e -> inserirCamisa());
         btnEditarCamisa.addActionListener(e -> editarCamisa());
         btnExcluirCamisa.addActionListener(e -> excluirCamisa());
+        btnAtualizarCamisas.addActionListener(e -> atualizarListaCamisas());
 
-        painelCamisas.add(btnInserirCamisa);
-        painelCamisas.add(btnEditarCamisa);
-        painelCamisas.add(btnExcluirCamisa);
+        tabelaCamisas = criarTabela();
+        painelCamisas.add(criarBarraTopo("Gerenciamento de Camisas",
+            btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa, btnAtualizarCamisas), BorderLayout.NORTH);
+        painelCamisas.add(criarRolagem(tabelaCamisas), BorderLayout.CENTER);
 
-        JPanel painelConsultas = new JPanel(new BorderLayout());
-        JPanel menuConsultas = new JPanel();
+        JPanel painelConsultas = criarPainelBase();
         String[] opcoes = {
-            "Selecione", 
-            "Clientes TOP", 
-            "Acima da Media", 
-            "Relatorio", 
+            "Selecione",
+            "Clientes TOP",
+            "Acima da Media",
+            "Relatorio",
             "Estoque",
             "Clientes Frequentes",
             "Camisas Sem Venda",
@@ -65,35 +88,279 @@ public class Dashboard extends JFrame {
             "Clientes Sem Compras"
         };
         comboConsultas = new JComboBox<>(opcoes);
-        JButton btnRodarConsulta = new JButton("Executar");
-        
-        btnRodarConsulta.addActionListener(e -> executarConsulta());
+        comboConsultas.setPreferredSize(new Dimension(220, 32));
+        JButton btnRodarConsulta = criarBotao("Executar", COR_SUCESSO);
 
+        btnRodarConsulta.addActionListener(e -> executarConsulta());
+        comboConsultas.addActionListener(e -> atualizarDescricaoConsulta());
+
+        JPanel menuConsultas = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        menuConsultas.setOpaque(false);
         menuConsultas.add(new JLabel("Visualizacao:"));
         menuConsultas.add(comboConsultas);
         menuConsultas.add(btnRodarConsulta);
-        tabelaResultados = new JTable();
-        painelConsultas.add(menuConsultas, BorderLayout.NORTH);
-        painelConsultas.add(new JScrollPane(tabelaResultados), BorderLayout.CENTER);
 
-        JPanel painelEstatistica = new JPanel(new BorderLayout());
-        JButton btnAtualizarEstatistica = new JButton("Atualizar Estatísticas");
+        JPanel linhaConsultas = new JPanel(new BorderLayout());
+        linhaConsultas.setOpaque(false);
+        linhaConsultas.add(criarTituloSecao("Consultas Avançadas"), BorderLayout.WEST);
+        linhaConsultas.add(menuConsultas, BorderLayout.EAST);
+
+        lblDescricaoConsulta = new JLabel();
+        lblDescricaoConsulta.setOpaque(true);
+        lblDescricaoConsulta.setBackground(new Color(225, 240, 231));
+        lblDescricaoConsulta.setForeground(COR_PRIMARIA);
+        lblDescricaoConsulta.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 4, 0, 0, COR_SUCESSO),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+        atualizarDescricaoConsulta();
+
+        JPanel topoConsultas = new JPanel(new BorderLayout(0, 8));
+        topoConsultas.setOpaque(false);
+        topoConsultas.add(linhaConsultas, BorderLayout.NORTH);
+        topoConsultas.add(lblDescricaoConsulta, BorderLayout.SOUTH);
+
+        tabelaResultados = criarTabela();
+        lblTotalRegistros = new JLabel(" ");
+        lblTotalRegistros.setForeground(COR_NEUTRA);
+
+        painelConsultas.add(topoConsultas, BorderLayout.NORTH);
+        painelConsultas.add(criarRolagem(tabelaResultados), BorderLayout.CENTER);
+        painelConsultas.add(lblTotalRegistros, BorderLayout.SOUTH);
+
+        JPanel painelEstatistica = criarPainelBase();
+        JButton btnAtualizarEstatistica = criarBotao("Atualizar Estatísticas", COR_SUCESSO);
         JTextArea areaEstatisticas = new JTextArea();
         areaEstatisticas.setEditable(false);
-        areaEstatisticas.setFont(new Font("Monospaced", Font.BOLD, 14));
-        areaEstatisticas.setMargin(new Insets(20, 20, 20, 20));
-        
+        areaEstatisticas.setFont(new Font("Consolas", Font.PLAIN, 14));
+        areaEstatisticas.setMargin(new Insets(16, 20, 16, 20));
+
         btnAtualizarEstatistica.addActionListener(e -> atualizarEstatisticas(areaEstatisticas));
-        
-        painelEstatistica.add(btnAtualizarEstatistica, BorderLayout.NORTH);
-        painelEstatistica.add(new JScrollPane(areaEstatisticas), BorderLayout.CENTER);
+
+        painelEstatistica.add(criarBarraTopo("Estatísticas do Negócio", btnAtualizarEstatistica), BorderLayout.NORTH);
+        painelEstatistica.add(criarRolagem(areaEstatisticas), BorderLayout.CENTER);
 
         painelAbas.addTab("Clientes", painelClientes);
         painelAbas.addTab("Camisas", painelCamisas);
         painelAbas.addTab("Consultas", painelConsultas);
         painelAbas.addTab("Estatisticas", painelEstatistica);
 
-        add(painelAbas);
+        JPanel painelRaiz = new JPanel(new BorderLayout());
+        painelRaiz.add(criarCabecalho(), BorderLayout.NORTH);
+        painelRaiz.add(painelAbas, BorderLayout.CENTER);
+        add(painelRaiz);
+
+        //carrega os dados assim que a janela abre
+        SwingUtilities.invokeLater(() -> {
+            atualizarListaClientes();
+            atualizarListaCamisas();
+            atualizarEstatisticas(areaEstatisticas);
+        });
+    }
+
+    //componentes visuais
+    private static void configurarAparencia() {
+        FontUIResource fonte = new FontUIResource("Segoe UI", Font.PLAIN, 13);
+        for (Object chave : Collections.list(UIManager.getDefaults().keys())) {
+            if (UIManager.get(chave) instanceof FontUIResource) {
+                UIManager.put(chave, fonte);
+            }
+        }
+        UIManager.put("TabbedPane.font", new FontUIResource("Segoe UI", Font.BOLD, 13));
+        UIManager.put("TabbedPane.selected", Color.WHITE);
+        UIManager.put("TabbedPane.contentAreaColor", COR_FUNDO);
+        UIManager.put("TabbedPane.tabInsets", new Insets(8, 20, 8, 20));
+    }
+
+    private JPanel criarCabecalho() {
+        JPanel cabecalho = new JPanel(new BorderLayout());
+        cabecalho.setBackground(COR_PRIMARIA);
+        cabecalho.setBorder(BorderFactory.createEmptyBorder(14, 24, 14, 24));
+
+        JLabel titulo = new JLabel("Jerseyhub");
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        titulo.setForeground(Color.WHITE);
+
+        JLabel subtitulo = new JLabel("Gestão de camisas, clientes e estoque");
+        subtitulo.setForeground(new Color(190, 230, 205));
+
+        cabecalho.add(titulo, BorderLayout.NORTH);
+        cabecalho.add(subtitulo, BorderLayout.SOUTH);
+        return cabecalho;
+    }
+
+    private JPanel criarPainelBase() {
+        JPanel painel = new JPanel(new BorderLayout(0, 12));
+        painel.setBackground(COR_FUNDO);
+        painel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        return painel;
+    }
+
+    private JLabel criarTituloSecao(String texto) {
+        JLabel titulo = new JLabel(texto);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        titulo.setForeground(COR_PRIMARIA);
+        return titulo;
+    }
+
+    private JPanel criarBarraTopo(String titulo, JButton... botoes) {
+        JPanel barra = new JPanel(new BorderLayout());
+        barra.setOpaque(false);
+        barra.add(criarTituloSecao(titulo), BorderLayout.WEST);
+
+        JPanel painelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        painelBotoes.setOpaque(false);
+        for (JButton botao : botoes) painelBotoes.add(botao);
+        barra.add(painelBotoes, BorderLayout.EAST);
+        return barra;
+    }
+
+    private JButton criarBotao(String texto, Color cor) {
+        JButton botao = new JButton(texto) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                //desenha o fundo com cantos arredondados
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isPressed() ? getBackground().darker() : getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        botao.setBackground(cor);
+        botao.setForeground(Color.WHITE);
+        botao.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        botao.setFocusPainted(false);
+        botao.setBorderPainted(false);
+        botao.setContentAreaFilled(false);
+        botao.setOpaque(false);
+        botao.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        botao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        botao.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) { botao.setBackground(cor.darker()); }
+            @Override
+            public void mouseExited(MouseEvent e) { botao.setBackground(cor); }
+        });
+        return botao;
+    }
+
+    private JScrollPane criarRolagem(JComponent componente) {
+        JScrollPane rolagem = new JScrollPane(componente);
+        rolagem.setBorder(BorderFactory.createLineBorder(new Color(220, 224, 228)));
+        rolagem.getViewport().setBackground(Color.WHITE);
+        return rolagem;
+    }
+
+    private JTable criarTabela() {
+        JTable tabela = new JTable();
+        tabela.setRowHeight(28);
+        tabela.setShowVerticalLines(false);
+        tabela.setGridColor(new Color(230, 233, 236));
+        tabela.setFillsViewportHeight(true);
+        tabela.setSelectionBackground(new Color(200, 228, 212));
+        tabela.setSelectionForeground(Color.BLACK);
+        tabela.getTableHeader().setReorderingAllowed(false);
+        tabela.getTableHeader().setPreferredSize(new Dimension(0, 34));
+
+        tabela.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object valor, boolean selecionada, boolean foco, int linha, int coluna) {
+                super.getTableCellRendererComponent(t, valor, selecionada, foco, linha, coluna);
+                if (!selecionada) setBackground(linha % 2 == 0 ? Color.WHITE : COR_LINHA_ALTERNADA);
+                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                return this;
+            }
+        });
+
+        tabela.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object valor, boolean selecionada, boolean foco, int linha, int coluna) {
+                super.getTableCellRendererComponent(t, valor, selecionada, foco, linha, coluna);
+                setBackground(COR_PRIMARIA);
+                setForeground(Color.WHITE);
+                setFont(new Font("Segoe UI", Font.BOLD, 13));
+                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                return this;
+            }
+        });
+        return tabela;
+    }
+
+    private DefaultTableModel criarModeloSomenteLeitura(Vector<Vector<Object>> dados, Vector<String> colunas) {
+        return new DefaultTableModel(dados, colunas) {
+            @Override
+            public boolean isCellEditable(int linha, int coluna) {
+                return false;
+            }
+        };
+    }
+
+    //listas das abas clientes e camisas
+    private void atualizarListaClientes() {
+        carregarLista(tabelaClientes, SQL_LISTA_CLIENTES);
+    }
+
+    private void atualizarListaCamisas() {
+        carregarLista(tabelaCamisas, SQL_LISTA_CAMISAS);
+    }
+
+    private void carregarLista(JTable tabela, String sql) {
+        try (Connection conexao = ConexaoBanco.conectar()) {
+            if (conexao == null) return;
+            try (PreparedStatement stmt = conexao.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                Vector<String> colunas = new Vector<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    colunas.add(metaData.getColumnLabel(i));
+                }
+
+                Vector<Vector<Object>> dados = new Vector<>();
+                while (rs.next()) {
+                    Vector<Object> linha = new Vector<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        linha.add(rs.getObject(i));
+                    }
+                    dados.add(linha);
+                }
+
+                tabela.setModel(criarModeloSomenteLeitura(dados, colunas));
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar lista: " + ex.getMessage());
+        }
+    }
+
+    private void atualizarDescricaoConsulta() {
+        String selecao = (String) comboConsultas.getSelectedItem();
+        String descricao;
+
+        if ("Clientes TOP".equals(selecao)) {
+            descricao = "JOIN + GROUP BY + HAVING com subconsulta: clientes cujo gasto total supera o valor médio de um pedido.";
+        } else if ("Acima da Media".equals(selecao)) {
+            descricao = "LEFT JOIN + COALESCE + subconsulta: camisas com preço acima da média do catálogo.";
+        } else if ("Relatorio".equals(selecao)) {
+            descricao = "INNER JOIN: todos os pedidos com o nome do cliente, a data e o valor total.";
+        } else if ("Estoque".equals(selecao)) {
+            descricao = "LEFT JOIN + COALESCE + ORDER BY: estoque de cada camisa, do maior para o menor.";
+        } else if ("Clientes Frequentes".equals(selecao)) {
+            descricao = "JOIN + COUNT + GROUP BY + HAVING: quantidade de pedidos feitos por cliente.";
+        } else if ("Camisas Sem Venda".equals(selecao)) {
+            descricao = "Subconsulta com NOT IN: camisas que nunca apareceram em um pedido.";
+        } else if ("Ticket Medio".equals(selecao)) {
+            descricao = "JOIN + AVG + GROUP BY: valor médio por pedido de cada cliente.";
+        } else if ("Camisa Mais Cara".equals(selecao)) {
+            descricao = "Subconsulta correlacionada: a camisa mais cara de cada equipe.";
+        } else if ("Clientes Sem Compras".equals(selecao)) {
+            descricao = "Subconsulta com NOT IN: clientes cadastrados que nunca fizeram um pedido.";
+        } else {
+            descricao = "Selecione uma consulta e clique em Executar.";
+        }
+
+        lblDescricaoConsulta.setText(descricao);
     }
 
     //crod de clientes
@@ -117,6 +384,7 @@ public class Dashboard extends JFrame {
                 stmt.setString(6, cep);
                 stmt.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Sucesso!");
+                atualizarListaClientes();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Erro: O campo numero deve conter apenas valores inteiros positivos.");
             } catch (SQLException ex) {
@@ -166,6 +434,7 @@ public class Dashboard extends JFrame {
                     stmtUpdate.setString(7, cpfBusca);
                     stmtUpdate.executeUpdate();
                     JOptionPane.showMessageDialog(this, "Cliente atualizado com sucesso!");
+                    atualizarListaClientes();
                 }
             }
         } catch (NumberFormatException ex) {
@@ -202,6 +471,7 @@ public class Dashboard extends JFrame {
                     stmtDelete.setString(1, cpfBusca);
                     stmtDelete.executeUpdate();
                     JOptionPane.showMessageDialog(this, "Cliente excluído com sucesso!");
+                    atualizarListaClientes();
                 }
             }
         } catch (SQLException ex) {
@@ -238,6 +508,7 @@ public class Dashboard extends JFrame {
                 
                 stmt.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Camisa inserida com sucesso!");
+                atualizarListaCamisas();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Erro: Certifique-se de que Preço, Ano, Estoque e Equipe são números válidos.");
             } catch (SQLException ex) {
@@ -297,6 +568,7 @@ public class Dashboard extends JFrame {
                     stmtUpdate.setInt(8, Integer.parseInt(idBusca));
                     stmtUpdate.executeUpdate();
                     JOptionPane.showMessageDialog(this, "Camisa atualizada com sucesso!");
+                    atualizarListaCamisas();
                 }
             }
         } catch (NumberFormatException ex) {
@@ -334,6 +606,7 @@ public class Dashboard extends JFrame {
                     stmtDelete.setInt(1, Integer.parseInt(idBusca));
                     stmtDelete.executeUpdate();
                     JOptionPane.showMessageDialog(this, "Camisa excluída com sucesso!");
+                    atualizarListaCamisas();
                 }
             }
         } catch (NumberFormatException ex) {
@@ -357,7 +630,7 @@ public class Dashboard extends JFrame {
         } else if ("Estoque".equals(selecao)) {
             sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho as Tamanho, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.quantidade_estoque DESC";
         } else if ("Clientes Frequentes".equals(selecao)) {
-            sql = "SELECT cl.nome AS Cliente, COUNT(p.id_pedido) AS Total_Pedidos FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome HAVING COUNT(p.id_pedido) > 0 ORDER BY Total_Pedidos DESC";
+            sql = "SELECT cl.nome AS Cliente, COUNT(p.id_pedido) AS Total_Pedidos FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome HAVING COUNT(p.id_pedido) > 3 ORDER BY Total_Pedidos DESC";
         } else if ("Camisas Sem Venda".equals(selecao)) {
             sql = "SELECT c.modelo AS Modelo, c.versao AS Versao, c.preco AS Preco FROM Camisa c WHERE c.id_camisa NOT IN (SELECT fk_id_camisa FROM Item_Pedido)";
         } else if ("Ticket Medio".equals(selecao)) {
@@ -380,7 +653,7 @@ public class Dashboard extends JFrame {
             Vector<String> colunas = new Vector<>();
             
             for (int i = 1; i <= columnCount; i++) {
-                colunas.add(metaData.getColumnName(i));
+                colunas.add(metaData.getColumnLabel(i));
             }
 
             Vector<Vector<Object>> dados = new Vector<>();
@@ -392,7 +665,8 @@ public class Dashboard extends JFrame {
                 dados.add(linha);
             }
 
-            tabelaResultados.setModel(new DefaultTableModel(dados, colunas));
+            tabelaResultados.setModel(criarModeloSomenteLeitura(dados, colunas));
+            lblTotalRegistros.setText(dados.size() + " registro(s) encontrado(s)");
 
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao executar consulta: " + ex.getMessage());
@@ -534,6 +808,7 @@ public class Dashboard extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            configurarAparencia();
             new Dashboard().setVisible(true);
         });
     }

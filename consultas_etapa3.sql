@@ -27,7 +27,7 @@ SELECT cl.nome AS Cliente, COUNT(p.id_pedido) AS Total_Pedidos
 FROM Cliente cl 
 JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente 
 GROUP BY cl.id_cliente, cl.nome 
-HAVING COUNT(p.id_pedido) > 0 ORDER BY Total_Pedidos DESC;
+HAVING COUNT(p.id_pedido) > 3 ORDER BY Total_Pedidos DESC;
 
 -- 6. Camisas Sem Venda
 SELECT c.modelo AS Modelo, c.versao AS Versao, c.preco AS Preco FROM Camisa c 
