@@ -1,10 +1,10 @@
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLaf;
+
 import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,14 +15,20 @@ import java.util.Vector;
 
 public class Dashboard extends JFrame {
 
-    //cores da interface
-    private static final Color COR_PRIMARIA = new Color(20, 83, 45);
-    private static final Color COR_SUCESSO = new Color(34, 139, 84);
-    private static final Color COR_EDICAO = new Color(41, 98, 168);
-    private static final Color COR_PERIGO = new Color(192, 57, 43);
-    private static final Color COR_NEUTRA = new Color(108, 117, 125);
-    private static final Color COR_FUNDO = new Color(244, 246, 248);
-    private static final Color COR_LINHA_ALTERNADA = new Color(240, 246, 242);
+    //cores da interface (tema escuro)
+    private static final Color COR_PRIMARIA = Color.decode("#14532D");
+    private static final Color COR_SUCESSO = Color.decode("#2EA05F");
+    private static final Color COR_EDICAO = Color.decode("#2F6FD0");
+    private static final Color COR_PERIGO = Color.decode("#C93C37");
+    private static final Color COR_NEUTRA = Color.decode("#484F58");
+    private static final Color COR_FUNDO = Color.decode("#16191D");
+    private static final Color COR_CARTAO = Color.decode("#1F2328");
+    private static final Color COR_BORDA = Color.decode("#2D333B");
+    private static final Color COR_TEXTO = Color.decode("#E6EDF3");
+    private static final Color COR_TEXTO_SUAVE = Color.decode("#8B949E");
+    private static final Color COR_LINHA_ALTERNADA = Color.decode("#23282E");
+    private static final Color COR_SELECAO = Color.decode("#1C4A30");
+    private static final Color COR_DESTAQUE_FUNDO = Color.decode("#183326");
 
     private static final String SQL_LISTA_CLIENTES = "SELECT id_cliente AS ID, nome AS Nome, cpf AS CPF, rua AS Rua, numero AS Numero, bairro AS Bairro, cep AS CEP FROM Cliente ORDER BY nome";
     private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.id_camisa";
@@ -107,8 +113,8 @@ public class Dashboard extends JFrame {
 
         lblDescricaoConsulta = new JLabel();
         lblDescricaoConsulta.setOpaque(true);
-        lblDescricaoConsulta.setBackground(new Color(225, 240, 231));
-        lblDescricaoConsulta.setForeground(COR_PRIMARIA);
+        lblDescricaoConsulta.setBackground(COR_DESTAQUE_FUNDO);
+        lblDescricaoConsulta.setForeground(COR_TEXTO);
         lblDescricaoConsulta.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 4, 0, 0, COR_SUCESSO),
             BorderFactory.createEmptyBorder(8, 12, 8, 12)));
@@ -121,7 +127,7 @@ public class Dashboard extends JFrame {
 
         tabelaResultados = criarTabela();
         lblTotalRegistros = new JLabel(" ");
-        lblTotalRegistros.setForeground(COR_NEUTRA);
+        lblTotalRegistros.setForeground(COR_TEXTO_SUAVE);
 
         painelConsultas.add(topoConsultas, BorderLayout.NORTH);
         painelConsultas.add(criarRolagem(tabelaResultados), BorderLayout.CENTER);
@@ -133,6 +139,8 @@ public class Dashboard extends JFrame {
         areaEstatisticas.setEditable(false);
         areaEstatisticas.setFont(new Font("Consolas", Font.PLAIN, 14));
         areaEstatisticas.setMargin(new Insets(16, 20, 16, 20));
+        areaEstatisticas.setBackground(COR_CARTAO);
+        areaEstatisticas.setForeground(COR_TEXTO);
 
         btnAtualizarEstatistica.addActionListener(e -> atualizarEstatisticas(areaEstatisticas));
 
@@ -159,16 +167,20 @@ public class Dashboard extends JFrame {
 
     //componentes visuais
     private static void configurarAparencia() {
-        FontUIResource fonte = new FontUIResource("Segoe UI", Font.PLAIN, 13);
-        for (Object chave : Collections.list(UIManager.getDefaults().keys())) {
-            if (UIManager.get(chave) instanceof FontUIResource) {
-                UIManager.put(chave, fonte);
-            }
-        }
-        UIManager.put("TabbedPane.font", new FontUIResource("Segoe UI", Font.BOLD, 13));
-        UIManager.put("TabbedPane.selected", Color.WHITE);
-        UIManager.put("TabbedPane.contentAreaColor", COR_FUNDO);
-        UIManager.put("TabbedPane.tabInsets", new Insets(8, 20, 8, 20));
+        //tema escuro do FlatLaf com verde como cor de destaque
+        FlatLaf.setGlobalExtraDefaults(Map.of("@accentColor", "#2EA05F"));
+        FlatDarkLaf.setup();
+
+        UIManager.put("defaultFont", new Font("Segoe UI", Font.PLAIN, 13));
+        UIManager.put("Button.arc", 12);
+        UIManager.put("Component.arc", 10);
+        UIManager.put("TextComponent.arc", 10);
+        UIManager.put("ScrollBar.thumbArc", 999);
+        UIManager.put("ScrollBar.width", 10);
+        UIManager.put("TabbedPane.tabHeight", 40);
+        UIManager.put("TabbedPane.font", new Font("Segoe UI", Font.BOLD, 13));
+        UIManager.put("TabbedPane.background", COR_FUNDO);
+        UIManager.put("Panel.background", COR_FUNDO);
     }
 
     private JPanel criarCabecalho() {
@@ -197,8 +209,8 @@ public class Dashboard extends JFrame {
 
     private JLabel criarTituloSecao(String texto) {
         JLabel titulo = new JLabel(texto);
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 17));
-        titulo.setForeground(COR_PRIMARIA);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titulo.setForeground(COR_TEXTO);
         return titulo;
     }
 
@@ -215,60 +227,48 @@ public class Dashboard extends JFrame {
     }
 
     private JButton criarBotao(String texto, Color cor) {
-        JButton botao = new JButton(texto) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                //desenha o fundo com cantos arredondados
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isPressed() ? getBackground().darker() : getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        botao.setBackground(cor);
-        botao.setForeground(Color.WHITE);
+        JButton botao = new JButton(texto);
         botao.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        botao.setFocusPainted(false);
-        botao.setBorderPainted(false);
-        botao.setContentAreaFilled(false);
-        botao.setOpaque(false);
-        botao.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        botao.setMargin(new Insets(7, 16, 7, 16));
+        botao.setFocusable(false);
         botao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        botao.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) { botao.setBackground(cor.darker()); }
-            @Override
-            public void mouseExited(MouseEvent e) { botao.setBackground(cor); }
-        });
+        //o FlatLaf arredonda os cantos; aqui so definimos as cores (normal, mouse em cima e clicado)
+        botao.putClientProperty("FlatLaf.style",
+            "background: " + hex(cor) + "; foreground: #FFFFFF; borderWidth: 0; focusWidth: 0;"
+            + " hoverBackground: " + hex(cor.brighter()) + "; pressedBackground: " + hex(cor.darker()));
         return botao;
+    }
+
+    private static String hex(Color cor) {
+        return String.format("#%02X%02X%02X", cor.getRed(), cor.getGreen(), cor.getBlue());
     }
 
     private JScrollPane criarRolagem(JComponent componente) {
         JScrollPane rolagem = new JScrollPane(componente);
-        rolagem.setBorder(BorderFactory.createLineBorder(new Color(220, 224, 228)));
-        rolagem.getViewport().setBackground(Color.WHITE);
+        rolagem.setBorder(BorderFactory.createLineBorder(COR_BORDA));
+        rolagem.getViewport().setBackground(COR_CARTAO);
         return rolagem;
     }
 
     private JTable criarTabela() {
         JTable tabela = new JTable();
-        tabela.setRowHeight(28);
+        tabela.setRowHeight(32);
         tabela.setShowVerticalLines(false);
-        tabela.setGridColor(new Color(230, 233, 236));
+        tabela.setShowHorizontalLines(true);
+        tabela.setGridColor(COR_BORDA);
         tabela.setFillsViewportHeight(true);
-        tabela.setSelectionBackground(new Color(200, 228, 212));
-        tabela.setSelectionForeground(Color.BLACK);
+        tabela.setBackground(COR_CARTAO);
         tabela.getTableHeader().setReorderingAllowed(false);
-        tabela.getTableHeader().setPreferredSize(new Dimension(0, 34));
+        tabela.getTableHeader().setPreferredSize(new Dimension(0, 36));
 
         tabela.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object valor, boolean selecionada, boolean foco, int linha, int coluna) {
                 super.getTableCellRendererComponent(t, valor, selecionada, foco, linha, coluna);
-                if (!selecionada) setBackground(linha % 2 == 0 ? Color.WHITE : COR_LINHA_ALTERNADA);
-                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                if (selecionada) setBackground(COR_SELECAO);
+                else setBackground(linha % 2 == 0 ? COR_CARTAO : COR_LINHA_ALTERNADA);
+                setForeground(COR_TEXTO);
+                setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
                 return this;
             }
         });
@@ -277,10 +277,12 @@ public class Dashboard extends JFrame {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object valor, boolean selecionada, boolean foco, int linha, int coluna) {
                 super.getTableCellRendererComponent(t, valor, selecionada, foco, linha, coluna);
-                setBackground(COR_PRIMARIA);
-                setForeground(Color.WHITE);
-                setFont(new Font("Segoe UI", Font.BOLD, 13));
-                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                setBackground(COR_CARTAO);
+                setForeground(COR_TEXTO_SUAVE);
+                setFont(new Font("Segoe UI", Font.BOLD, 12));
+                setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, COR_BORDA),
+                    BorderFactory.createEmptyBorder(0, 12, 0, 12)));
                 return this;
             }
         });
