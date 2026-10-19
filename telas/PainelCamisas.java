@@ -1,280 +1,197 @@
 package telas;
 
 import banco.ConexaoBanco;
-import telas.componentes.CampoFormulario;
-import telas.componentes.SeletorOpcoes;
-
 import javax.swing.*;
-import java.math.BigDecimal;
+import java.awt.*;
 import java.sql.*;
-import java.time.Year;
+import java.util.Vector;
 
-/**
- * Catálogo de camisas: lista com busca por modelo ou equipe e formulário fixo ao lado
- * para inserir, editar e excluir (tabela Camisa).
- */
-public class PainelCamisas extends PainelCadastro {
-
-    private static final String SQL_LISTA_CAMISAS =
-        "SELECT c.id_camisa AS `Nº`, CONCAT(COALESCE(e.nome, 'Sem equipe'), ' · ', c.modelo) AS Camisa, "
-        + "c.versao AS `Versão`, c.tamanho AS Tam, c.ano AS Ano, c.preco AS `Preço (R$)`, c.quantidade_estoque AS Estoque "
-        + "FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe "
-        + "WHERE c.modelo LIKE ? OR e.nome LIKE ? ORDER BY c.id_camisa";
-    private static final String SQL_LISTA_EQUIPES =
-        "SELECT id_equipe, nome FROM Equipe ORDER BY nome";
-    private static final String SQL_BUSCA_CAMISA =
-        "SELECT c.modelo, c.versao, c.tamanho, c.preco, c.ano, c.quantidade_estoque, c.fk_id_equipe, e.nome AS nome_equipe "
-        + "FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.id_camisa = ?";
-    private static final String SQL_INSERE_CAMISA =
-        "INSERT INTO Camisa (modelo, versao, tamanho, preco, ano, quantidade_estoque, fk_id_equipe) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String SQL_ATUALIZA_CAMISA =
-        "UPDATE Camisa SET modelo = ?, versao = ?, tamanho = ?, preco = ?, ano = ?, quantidade_estoque = ?, fk_id_equipe = ? "
-        + "WHERE id_camisa = ?";
-    private static final String SQL_EXCLUI_CAMISA =
-        "DELETE FROM Camisa WHERE id_camisa = ?";
-
-    /** Item da lista de equipes; id null representa "Sem equipe" (fk_id_equipe = NULL). */
-    private static class OpcaoEquipe {
-        private final Integer idEquipe;
-        private final String nome;
-
-        OpcaoEquipe(Integer idEquipe, String nome) {
-            this.idEquipe = idEquipe;
-            this.nome = nome;
-        }
-
-        Integer idEquipe() {
-            return idEquipe;
-        }
-
-        @Override
-        public String toString() {
-            return nome;
-        }
-    }
-
-    private static final OpcaoEquipe SEM_EQUIPE = new OpcaoEquipe(null, "Sem equipe");
-
-    /** Modelo e ano da camisa em edição, mostrados abaixo do nome da equipe no formulário. */
-    private String detalheAtual = null;
-
-    private final JComboBox<OpcaoEquipe> comboEquipe = new JComboBox<>();
-    private final JTextField campoModelo = UIUtils.criarCampoTexto("Ex.: Principal, Reserva, Retrô");
-    private final SeletorOpcoes seletorVersao = new SeletorOpcoes("Torcedor", "Jogador");
-    private final SeletorOpcoes seletorTamanho = new SeletorOpcoes("P", "M", "G", "GG");
-    private final JTextField campoPreco = UIUtils.criarCampoTexto("0,00");
-    private final JTextField campoAno = UIUtils.criarCampoTexto(String.valueOf(Year.now().getValue()));
-    private final JTextField campoEstoque = UIUtils.criarCampoTexto("0");
-
-    private final CampoFormulario grupoEquipe = new CampoFormulario("Equipe", comboEquipe);
-    private final CampoFormulario grupoModelo = new CampoFormulario("Modelo", campoModelo);
-    private final CampoFormulario grupoVersao = new CampoFormulario("Versão", seletorVersao);
-    private final CampoFormulario grupoTamanho = new CampoFormulario("Tamanho", seletorTamanho);
-    private final CampoFormulario grupoPreco = new CampoFormulario("Preço (R$)", campoPreco);
-    private final CampoFormulario grupoAno = new CampoFormulario("Ano", campoAno);
-    private final CampoFormulario grupoEstoque = new CampoFormulario("Estoque (peças)", campoEstoque);
+public class PainelCamisas extends JPanel {
+    private JTable tabelaCamisas;
+    private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.id_camisa";
 
     public PainelCamisas() {
-        super("Camisa", "Camisas", true);
-        UIUtils.configurarCombo(comboEquipe);
-        UIUtils.prefixarCampo(campoPreco, "R$");
-        for (String tamanho : new String[]{"P", "M", "G", "GG"}) {
-            seletorTamanho.colorirOpcao(tamanho, Tema.corDoTamanho(tamanho));
-        }
-        carregarEquipes();
-        montarTela("Camisas", "Catálogo e estoque. Clique em uma camisa para editar ou excluir.");
+        UIUtils.configurarPainelBase(this);
+
+        JButton btnInserirCamisa = UIUtils.criarBotao("+ Inserir Camisa", UIUtils.COR_SUCESSO);
+        JButton btnEditarCamisa = UIUtils.criarBotao("Editar Camisa", UIUtils.COR_EDICAO);
+        JButton btnExcluirCamisa = UIUtils.criarBotao("Excluir Camisa", UIUtils.COR_PERIGO);
+        JButton btnAtualizarCamisas = UIUtils.criarBotao("Atualizar", UIUtils.COR_NEUTRA);
+
+        btnInserirCamisa.addActionListener(e -> inserirCamisa());
+        btnEditarCamisa.addActionListener(e -> editarCamisa());
+        btnExcluirCamisa.addActionListener(e -> excluirCamisa());
+        btnAtualizarCamisas.addActionListener(e -> atualizarListaCamisas());
+
+        tabelaCamisas = UIUtils.criarTabela();
+        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa, btnAtualizarCamisas), BorderLayout.NORTH);
+        add(UIUtils.criarRolagem(tabelaCamisas), BorderLayout.CENTER);
+
+        SwingUtilities.invokeLater(this::atualizarListaCamisas);
     }
 
-    /** Preenche o combo de equipes direto da tabela Equipe, em vez de pedir o ID digitado. */
-    private void carregarEquipes() {
-        comboEquipe.removeAllItems();
-        comboEquipe.addItem(SEM_EQUIPE);
+    private void atualizarListaCamisas() {
         try (Connection conexao = ConexaoBanco.conectar()) {
             if (conexao == null) return;
-            try (PreparedStatement consulta = conexao.prepareStatement(SQL_LISTA_EQUIPES);
-                 ResultSet resultado = consulta.executeQuery()) {
-                while (resultado.next()) {
-                    comboEquipe.addItem(new OpcaoEquipe(resultado.getInt("id_equipe"), resultado.getString("nome")));
+            try (PreparedStatement stmt = conexao.prepareStatement(SQL_LISTA_CAMISAS);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                Vector<String> colunas = new Vector<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    colunas.add(metaData.getColumnLabel(i));
                 }
+
+                Vector<Vector<Object>> dados = new Vector<>();
+                while (rs.next()) {
+                    Vector<Object> linha = new Vector<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        linha.add(rs.getObject(i));
+                    }
+                    dados.add(linha);
+                }
+
+                tabelaCamisas.setModel(UIUtils.criarModeloSomenteLeitura(dados, colunas));
             }
         } catch (SQLException ex) {
-            System.out.println("Erro ao carregar equipes: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao carregar lista: " + ex.getMessage());
         }
     }
 
-    @Override
-    protected void montarCampos(JPanel painelCampos) {
-        UIUtils.adicionarLinhaFormulario(painelCampos, 0, grupoEquipe);
-        UIUtils.adicionarLinhaFormulario(painelCampos, 1, grupoModelo);
-        UIUtils.adicionarLinhaFormulario(painelCampos, 2, grupoVersao);
-        UIUtils.adicionarLinhaFormulario(painelCampos, 3, grupoTamanho);
-        UIUtils.adicionarLinhaFormulario(painelCampos, 4, grupoPreco, grupoAno, 1, 1);
-        UIUtils.adicionarLinhaFormulario(painelCampos, 5, grupoEstoque);
-    }
+    private void inserirCamisa() {
+        String modelo = JOptionPane.showInputDialog(this, "Modelo:");
+        String versao = JOptionPane.showInputDialog(this, "Versão (Torcedor ou Jogador):");
+        String tamanho = JOptionPane.showInputDialog(this, "Tamanho (P, M, G, GG):");
+        String precoStr = JOptionPane.showInputDialog(this, "Preço (ex: 250.00):");
+        String anoStr = JOptionPane.showInputDialog(this, "Ano:");
+        String estoqueStr = JOptionPane.showInputDialog(this, "Quantidade em Estoque:");
+        String idEquipeStr = JOptionPane.showInputDialog(this, "ID da Equipe (deixe em branco se nulo):");
 
-    @Override
-    protected void focarPrimeiroCampo() {
-        SwingUtilities.invokeLater(comboEquipe::requestFocusInWindow);
-    }
-
-    @Override
-    protected void limparCampos() {
-        comboEquipe.setSelectedItem(SEM_EQUIPE);
-        campoModelo.setText("");
-        seletorVersao.limpar();
-        seletorTamanho.limpar();
-        campoPreco.setText("");
-        campoAno.setText(String.valueOf(Year.now().getValue()));
-        campoEstoque.setText("");
-    }
-
-    @Override
-    protected void limparErros() {
-        for (CampoFormulario grupo : new CampoFormulario[]{grupoEquipe, grupoModelo, grupoVersao, grupoTamanho, grupoPreco, grupoAno, grupoEstoque}) {
-            grupo.limparErro();
-        }
-    }
-
-    @Override
-    protected boolean validarCampos() {
-        boolean valido = true;
-        if (campoModelo.getText().isBlank()) {
-            grupoModelo.mostrarErro("Informe o modelo.");
-            valido = false;
-        }
-        if (seletorVersao.getSelecionado() == null) {
-            grupoVersao.mostrarErro("Escolha a versão.");
-            valido = false;
-        }
-        if (seletorTamanho.getSelecionado() == null) {
-            grupoTamanho.mostrarErro("Escolha o tamanho.");
-            valido = false;
-        }
-        BigDecimal preco = UIUtils.lerDecimal(campoPreco.getText());
-        if (preco == null || preco.signum() <= 0) {
-            grupoPreco.mostrarErro("Preço maior que zero.");
-            valido = false;
-        }
-        Integer ano = UIUtils.lerInteiro(campoAno.getText());
-        if (ano == null || ano < 1900 || ano > 2100) {
-            grupoAno.mostrarErro("Entre 1900 e 2100.");
-            valido = false;
-        }
-        Integer estoque = UIUtils.lerInteiro(campoEstoque.getText());
-        if (estoque == null || estoque < 0) {
-            grupoEstoque.mostrarErro("Use 0 ou mais peças.");
-            valido = false;
-        }
-        return valido;
-    }
-
-    @Override
-    protected PreparedStatement prepararConsultaLista(Connection conexao, String filtro) throws SQLException {
-        PreparedStatement consulta = conexao.prepareStatement(SQL_LISTA_CAMISAS);
-        consulta.setString(1, filtro);
-        consulta.setString(2, filtro);
-        return consulta;
-    }
-
-    @Override
-    protected void ajustarColunas() {
-        UIUtils.configurarColuna(tabela, 0, 56, SwingConstants.RIGHT);
-        UIUtils.configurarColuna(tabela, 2, 90, SwingConstants.LEFT);
-        UIUtils.configurarColuna(tabela, 3, 56, SwingConstants.CENTER);
-        UIUtils.configurarColuna(tabela, 4, 64, SwingConstants.RIGHT);
-        UIUtils.configurarColuna(tabela, 5, 100, SwingConstants.RIGHT);
-        UIUtils.configurarColuna(tabela, 6, 84, SwingConstants.RIGHT);
-    }
-
-    @Override
-    protected String carregarRegistro(Connection conexao, int id) throws SQLException {
-        try (PreparedStatement consulta = conexao.prepareStatement(SQL_BUSCA_CAMISA)) {
-            consulta.setInt(1, id);
-            try (ResultSet resultado = consulta.executeQuery()) {
-                if (!resultado.next()) return null;
-
-                int idEquipe = resultado.getInt("fk_id_equipe");
-                boolean semEquipe = resultado.wasNull();
-                selecionarEquipe(semEquipe ? null : idEquipe);
-
-                campoModelo.setText(resultado.getString("modelo"));
-                seletorVersao.setSelecionado(resultado.getString("versao"));
-                seletorTamanho.setSelecionado(resultado.getString("tamanho"));
-                campoPreco.setText(UIUtils.formatarDecimal(resultado.getBigDecimal("preco")));
-                campoAno.setText(String.valueOf(resultado.getInt("ano")));
-                campoEstoque.setText(String.valueOf(resultado.getInt("quantidade_estoque")));
-
-                detalheAtual = resultado.getString("modelo") + " " + resultado.getInt("ano");
-                return semEquipe ? "Sem equipe" : resultado.getString("nome_equipe");
+        if (modelo != null && versao != null && tamanho != null && precoStr != null && anoStr != null && estoqueStr != null) {
+            String sql = "INSERT INTO Camisa (modelo, versao, tamanho, preco, ano, quantidade_estoque, fk_id_equipe) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (Connection conexao = ConexaoBanco.conectar();
+                 PreparedStatement stmt = conexao.prepareStatement(sql)) {
+                stmt.setString(1, modelo);
+                stmt.setString(2, versao);
+                stmt.setString(3, tamanho);
+                stmt.setDouble(4, Double.parseDouble(precoStr));
+                stmt.setInt(5, Integer.parseInt(anoStr));
+                stmt.setInt(6, Integer.parseInt(estoqueStr));
+                
+                if (idEquipeStr == null || idEquipeStr.trim().isEmpty()) {
+                    stmt.setNull(7, java.sql.Types.INTEGER);
+                } else {
+                    stmt.setInt(7, Integer.parseInt(idEquipeStr));
+                }
+                
+                stmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Camisa inserida com sucesso!");
+                atualizarListaCamisas();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Erro: Certifique-se de que Preço, Ano, Estoque e Equipe são números válidos.");
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao inserir: " + ex.getMessage());
             }
         }
     }
 
-    @Override
-    protected String detalheDoRegistro() {
-        return detalheAtual;
-    }
+    private void editarCamisa() {
+        String idBusca = JOptionPane.showInputDialog(this, "Digite o ID da camisa que deseja editar:");
+        if (idBusca == null || idBusca.trim().isEmpty()) return;
 
-    private void selecionarEquipe(Integer idEquipe) {
-        for (int i = 0; i < comboEquipe.getItemCount(); i++) {
-            OpcaoEquipe opcao = comboEquipe.getItemAt(i);
-            if (java.util.Objects.equals(opcao.idEquipe(), idEquipe)) {
-                comboEquipe.setSelectedIndex(i);
+        String sqlBusca = "SELECT * FROM Camisa WHERE id_camisa = ?";
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmtBusca = conexao.prepareStatement(sqlBusca)) {
+            stmtBusca.setInt(1, Integer.parseInt(idBusca));
+            ResultSet rs = stmtBusca.executeQuery();
+
+            if (!rs.next()) {
+                JOptionPane.showMessageDialog(this, "Erro: Camisa com o ID informado não foi encontrada.");
                 return;
             }
+
+            String modeloAtual = rs.getString("modelo");
+            String versaoAtual = rs.getString("versao");
+            String tamanhoAtual = rs.getString("tamanho");
+            double precoAtual = rs.getDouble("preco");
+            int anoAtual = rs.getInt("ano");
+            int estoqueAtual = rs.getInt("quantidade_estoque");
+            int idEquipeAtual = rs.getInt("fk_id_equipe");
+            boolean equipeNula = rs.wasNull();
+
+            String modelo = JOptionPane.showInputDialog(this, "Modelo:", modeloAtual);
+            String versao = JOptionPane.showInputDialog(this, "Versão (Torcedor ou Jogador):", versaoAtual);
+            String tamanho = JOptionPane.showInputDialog(this, "Tamanho (P, M, G, GG):", tamanhoAtual);
+            String precoStr = JOptionPane.showInputDialog(this, "Preço:", String.valueOf(precoAtual));
+            String anoStr = JOptionPane.showInputDialog(this, "Ano:", String.valueOf(anoAtual));
+            String estoqueStr = JOptionPane.showInputDialog(this, "Quantidade em Estoque:", String.valueOf(estoqueAtual));
+            String idEquipeStr = JOptionPane.showInputDialog(this, "ID da Equipe (deixe em branco se nulo):", equipeNula ? "" : String.valueOf(idEquipeAtual));
+
+            if (modelo != null && versao != null && tamanho != null && precoStr != null && anoStr != null && estoqueStr != null) {
+                String sqlUpdate = "UPDATE Camisa SET modelo = ?, versao = ?, tamanho = ?, preco = ?, ano = ?, quantidade_estoque = ?, fk_id_equipe = ? WHERE id_camisa = ?";
+                try (PreparedStatement stmtUpdate = conexao.prepareStatement(sqlUpdate)) {
+                    stmtUpdate.setString(1, modelo);
+                    stmtUpdate.setString(2, versao);
+                    stmtUpdate.setString(3, tamanho);
+                    stmtUpdate.setDouble(4, Double.parseDouble(precoStr));
+                    stmtUpdate.setInt(5, Integer.parseInt(anoStr));
+                    stmtUpdate.setInt(6, Integer.parseInt(estoqueStr));
+                    
+                    if (idEquipeStr == null || idEquipeStr.trim().isEmpty()) {
+                        stmtUpdate.setNull(7, java.sql.Types.INTEGER);
+                    } else {
+                        stmtUpdate.setInt(7, Integer.parseInt(idEquipeStr));
+                    }
+                    
+                    stmtUpdate.setInt(8, Integer.parseInt(idBusca));
+                    stmtUpdate.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Camisa atualizada com sucesso!");
+                    atualizarListaCamisas();
+                }
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Erro de formatação. Preço, Ano, Estoque, e ID precisam ser numéricos.");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao atualizar: " + ex.getMessage());
         }
-        comboEquipe.setSelectedItem(SEM_EQUIPE);
     }
 
-    @Override
-    protected void inserir(Connection conexao) throws SQLException {
-        try (PreparedStatement comando = conexao.prepareStatement(SQL_INSERE_CAMISA)) {
-            preencherParametros(comando);
-            comando.executeUpdate();
-        }
-    }
+    private void excluirCamisa() {
+        String idBusca = JOptionPane.showInputDialog(this, "Digite o ID da camisa que deseja excluir:");
+        if (idBusca == null || idBusca.trim().isEmpty()) return;
 
-    @Override
-    protected void atualizar(Connection conexao, int id) throws SQLException {
-        try (PreparedStatement comando = conexao.prepareStatement(SQL_ATUALIZA_CAMISA)) {
-            preencherParametros(comando);
-            comando.setInt(8, id);
-            comando.executeUpdate();
-        }
-    }
+        String sqlBusca = "SELECT modelo, versao FROM Camisa WHERE id_camisa = ?";
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmtBusca = conexao.prepareStatement(sqlBusca)) {
+            stmtBusca.setInt(1, Integer.parseInt(idBusca));
+            ResultSet rs = stmtBusca.executeQuery();
 
-    @Override
-    protected void excluirRegistro(Connection conexao, int id) throws SQLException {
-        try (PreparedStatement comando = conexao.prepareStatement(SQL_EXCLUI_CAMISA)) {
-            comando.setInt(1, id);
-            comando.executeUpdate();
-        }
-    }
+            if (!rs.next()) {
+                JOptionPane.showMessageDialog(this, "Erro: Camisa com o ID informado não foi encontrada.");
+                return;
+            }
 
-    @Override
-    protected String traduzirErroEspecifico(SQLException ex) {
-        String mensagem = ex.getMessage() == null ? "" : ex.getMessage();
-        if (mensagem.contains("foreign key constraint fails")) {
-            return "Esta camisa já aparece em pedidos, então não pode ser excluída (ON DELETE RESTRICT). "
-                + "Se ela saiu de linha, deixe o estoque em 0.";
-        }
-        return null;
-    }
+            String modeloCamisa = rs.getString("modelo");
+            String versaoCamisa = rs.getString("versao");
+            int confirmacao = JOptionPane.showConfirmDialog(this, 
+                "Deseja confirmar a exclusão da camisa: " + modeloCamisa + " - " + versaoCamisa + " (ID: " + idBusca + ")?", 
+                "Confirmação de Exclusão", 
+                JOptionPane.YES_NO_OPTION);
 
-    /** Os parâmetros 1 a 7 são os mesmos no INSERT e no UPDATE. */
-    private void preencherParametros(PreparedStatement comando) throws SQLException {
-        comando.setString(1, campoModelo.getText().trim());
-        comando.setString(2, seletorVersao.getSelecionado());
-        comando.setString(3, seletorTamanho.getSelecionado());
-        comando.setBigDecimal(4, UIUtils.lerDecimal(campoPreco.getText()));
-        comando.setInt(5, UIUtils.lerInteiro(campoAno.getText()));
-        comando.setInt(6, UIUtils.lerInteiro(campoEstoque.getText()));
-
-        OpcaoEquipe equipe = (OpcaoEquipe) comboEquipe.getSelectedItem();
-        if (equipe == null || equipe.idEquipe() == null) {
-            comando.setNull(7, Types.INTEGER);
-        } else {
-            comando.setInt(7, equipe.idEquipe());
+            if (confirmacao == JOptionPane.YES_OPTION) {
+                String sqlDelete = "DELETE FROM Camisa WHERE id_camisa = ?";
+                try (PreparedStatement stmtDelete = conexao.prepareStatement(sqlDelete)) {
+                    stmtDelete.setInt(1, Integer.parseInt(idBusca));
+                    stmtDelete.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Camisa excluída com sucesso!");
+                    atualizarListaCamisas();
+                }
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Erro: O ID informado deve ser um número inteiro.");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao excluir: " + ex.getMessage());
         }
     }
 }
