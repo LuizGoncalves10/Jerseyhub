@@ -15,7 +15,6 @@ import java.util.Vector;
 
 public class Dashboard extends JFrame {
 
-    //cores da interface (tema escuro)
     private static final Color COR_PRIMARIA = Color.decode("#14532D");
     private static final Color COR_SUCESSO = Color.decode("#2EA05F");
     private static final Color COR_EDICAO = Color.decode("#2F6FD0");
@@ -43,6 +42,7 @@ public class Dashboard extends JFrame {
     public Dashboard() {
         setTitle("Jerseyhub - Dashboard");
         setSize(1000, 680);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -157,7 +157,6 @@ public class Dashboard extends JFrame {
         painelRaiz.add(painelAbas, BorderLayout.CENTER);
         add(painelRaiz);
 
-        //carrega os dados assim que a janela abre
         SwingUtilities.invokeLater(() -> {
             atualizarListaClientes();
             atualizarListaCamisas();
@@ -165,10 +164,8 @@ public class Dashboard extends JFrame {
         });
     }
 
-    //componentes visuais
     private static void configurarAparencia() {
-        //tema escuro do FlatLaf com verde como cor de destaque
-        FlatLaf.setGlobalExtraDefaults(Map.of("@accentColor", "#2EA05F"));
+        FlatLaf.setGlobalExtraDefaults(Collections.singletonMap("@accentColor", "#2EA05F"));
         FlatDarkLaf.setup();
 
         UIManager.put("defaultFont", new Font("Segoe UI", Font.PLAIN, 13));
@@ -232,7 +229,6 @@ public class Dashboard extends JFrame {
         botao.setMargin(new Insets(7, 16, 7, 16));
         botao.setFocusable(false);
         botao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        //o FlatLaf arredonda os cantos; aqui so definimos as cores (normal, mouse em cima e clicado)
         botao.putClientProperty("FlatLaf.style",
             "background: " + hex(cor) + "; foreground: #FFFFFF; borderWidth: 0; focusWidth: 0;"
             + " hoverBackground: " + hex(cor.brighter()) + "; pressedBackground: " + hex(cor.darker()));
@@ -298,7 +294,6 @@ public class Dashboard extends JFrame {
         };
     }
 
-    //listas das abas clientes e camisas
     private void atualizarListaClientes() {
         carregarLista(tabelaClientes, SQL_LISTA_CLIENTES);
     }
@@ -365,7 +360,6 @@ public class Dashboard extends JFrame {
         lblDescricaoConsulta.setText(descricao);
     }
 
-    //crod de clientes
     private void inserirCliente() {
         String nome = JOptionPane.showInputDialog(this, "Nome:");
         String cpf = JOptionPane.showInputDialog(this, "CPF (11 digitos, apenas numeros):");
@@ -481,7 +475,6 @@ public class Dashboard extends JFrame {
         }
     }
 
-    //crod de camisas
     private void inserirCamisa() {
         String modelo = JOptionPane.showInputDialog(this, "Modelo:");
         String versao = JOptionPane.showInputDialog(this, "Versão (Torcedor ou Jogador):");
@@ -618,7 +611,6 @@ public class Dashboard extends JFrame {
         }
     }
 
-    //consultas
     private void executarConsulta() {
         String selecao = (String) comboConsultas.getSelectedItem();
         String sql = "";
@@ -675,7 +667,6 @@ public class Dashboard extends JFrame {
         }
     }
 
-    //estatisticas
     private void atualizarEstatisticas(JTextArea areaEstatisticas) {
         StringBuilder sb = new StringBuilder();
         sb.append("=== ESTATÍSTICAS DO SISTEMA JERSEYHUB ===\n\n");
