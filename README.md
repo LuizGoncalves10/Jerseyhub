@@ -4,18 +4,12 @@ O Jerseyhub é um sistema de gestão desktop para o controle de catálogo, estoq
 
 ## Funcionalidades Principais
 
-O sistema é dividido em quatro abas principais através de um painel de navegação:
+O sistema é dividido em quatro áreas, acessadas pela barra lateral:
 
-* **Gestão de Clientes:** Permite realizar o CRUD (Criar, Ler, Atualizar e Eliminar) de clientes de forma intuitiva, utilizando o CPF como chave de identificação.
-* **Gestão de Camisas:** Controle completo do catálogo, permitindo inserir, editar e remover modelos de camisas, registando informações como versão (Torcedor/Jogador), tamanho, preço, ano, equipe e quantidade em estoque.
-* **Consultas Avançadas:** Módulo para execução de consultas complexas no banco de dados, incluindo junções (JOINs) e subconsultas. Inclui visualizações como:
-* Clientes Frequentes.
-* Camisas com preço acima da média.
-* Relatório geral de pedidos.
-* Situação detalhada do estoque.
-
-
-* **Dashboard de Estatísticas:** Um painel analítico que processa os dados do banco em tempo real para gerar métricas comerciais e matemáticas.
+* **Gestão de Camisas:** Controle completo do catálogo. A lista fica à esquerda (com busca por equipe ou modelo) e um formulário fixo à direita: clicar numa camisa carrega os dados para edição, "Nova camisa" limpa o formulário para cadastro e "Excluir" pede confirmação ali mesmo, sem janelas extras. Versão e tamanho são escolhidos em botões (só os valores aceitos pelos CHECKs do banco) e a equipe vem de uma lista carregada da tabela Equipe.
+* **Gestão de Clientes:** CRUD de clientes no mesmo formato, com busca por nome ou CPF, máscara de CPF e CEP e mensagens de erro ao lado de cada campo (CPF repetido, cliente com pedidos que não pode ser excluído etc.).
+* **Consultas Avançadas:** As 9 consultas do projeto, com junções (JOINs) e subconsultas. Ao escolher uma, a tela mostra a pergunta que ela responde, o SQL exato enviado ao banco e o resultado.
+* **Estatísticas:** Boxplot dos preços, medidas de centralização e dispersão, modelos por tamanho e o intervalo de confiança do estoque, calculados na hora a partir do banco.
 
 ## Estatísticas Implementadas
 
@@ -38,6 +32,8 @@ Para atender aos requisitos analíticos e de análise de dados, o sistema extrai
 * **Java:** Linguagem principal utilizada para a lógica de negócio, manipulação de dados e cálculos estatísticos.
 * **Java Swing:** Biblioteca utilizada para a construção de toda a Interface Gráfica do Utilizador (GUI).
 * **JDBC (Java Database Connectivity):** API utilizada para estabelecer a conexão entre a aplicação e o banco de dados.
+* **FlatLaf:** Tema visual da interface Swing (apenas aparência; não tem relação com o banco de dados).
+* **Fonte Barlow:** Arquivos na pasta `fontes/` (licença SIL Open Font License, em `fontes/OFL.txt`). Se a pasta não for encontrada, o sistema usa a fonte padrão.
 * **SQL Puro:** Todas as operações de persistência e extração de dados foram feitas através de instruções SQL diretas, sem a utilização de frameworks ORM, garantindo o controle total sobre as consultas.
 
 ## Equipa
