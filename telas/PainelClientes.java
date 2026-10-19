@@ -8,7 +8,9 @@ import java.util.Vector;
 
 public class PainelClientes extends JPanel {
     private JTable tabelaClientes;
-    private static final String SQL_LISTA_CLIENTES = "SELECT id_cliente AS ID, nome AS Nome, cpf AS CPF, rua AS Rua, numero AS Numero, bairro AS Bairro, cep AS CEP FROM Cliente ORDER BY nome";
+    private JTextField campoBusca;
+    private JLabel lblTotalClientes;
+    private static final String SQL_LISTA_CLIENTES = "SELECT id_cliente AS ID, nome AS Nome, cpf AS CPF, rua AS Rua, numero AS Numero, bairro AS Bairro, cep AS CEP FROM Cliente WHERE nome LIKE ? OR cpf LIKE ? ORDER BY nome";
 
     public PainelClientes() {
         UIUtils.configurarPainelBase(this);
@@ -23,9 +25,14 @@ public class PainelClientes extends JPanel {
         btnExcluirCliente.addActionListener(e -> excluirClientePorCpf());
         btnAtualizarClientes.addActionListener(e -> atualizarListaClientes());
 
+        campoBusca = UIUtils.criarCampoBusca("Buscar por nome ou CPF...");
+        UIUtils.executarAoDigitar(campoBusca, this::atualizarListaClientes);
+
         tabelaClientes = UIUtils.criarTabela();
-        add(UIUtils.criarBarraTopo("Gerenciamento de Clientes", btnInserirCliente, btnEditarCliente, btnExcluirCliente, btnAtualizarClientes), BorderLayout.NORTH);
+        lblTotalClientes = UIUtils.criarContador();
+        add(UIUtils.criarBarraTopo("Gerenciamento de Clientes", campoBusca, btnInserirCliente, btnEditarCliente, btnExcluirCliente, btnAtualizarClientes), BorderLayout.NORTH);
         add(UIUtils.criarRolagem(tabelaClientes), BorderLayout.CENTER);
+        add(lblTotalClientes, BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(this::atualizarListaClientes);
     }
@@ -33,8 +40,12 @@ public class PainelClientes extends JPanel {
     private void atualizarListaClientes() {
         try (Connection conexao = ConexaoBanco.conectar()) {
             if (conexao == null) return;
-            try (PreparedStatement stmt = conexao.prepareStatement(SQL_LISTA_CLIENTES);
-                 ResultSet rs = stmt.executeQuery()) {
+            try (PreparedStatement stmt = conexao.prepareStatement(SQL_LISTA_CLIENTES)) {
+                //busca vazia vira "%%", que traz todos os clientes
+                String termo = "%" + campoBusca.getText().trim() + "%";
+                stmt.setString(1, termo);
+                stmt.setString(2, termo);
+                ResultSet rs = stmt.executeQuery();
 
                 ResultSetMetaData metaData = rs.getMetaData();
                 int columnCount = metaData.getColumnCount();
@@ -53,6 +64,7 @@ public class PainelClientes extends JPanel {
                 }
 
                 tabelaClientes.setModel(UIUtils.criarModeloSomenteLeitura(dados, colunas));
+                lblTotalClientes.setText(dados.size() + " cliente(s) encontrado(s)");
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar lista: " + ex.getMessage());
@@ -88,8 +100,19 @@ public class PainelClientes extends JPanel {
         }
     }
 
+    //CPF da linha selecionada na tabela, ou null se nenhuma linha estiver selecionada
+    private String cpfDaLinhaSelecionada() {
+        int linha = tabelaClientes.getSelectedRow();
+        if (linha == -1) return null;
+        int colunaCpf = tabelaClientes.getColumnModel().getColumnIndex("CPF");
+        return String.valueOf(tabelaClientes.getValueAt(linha, colunaCpf));
+    }
+
     private void editarClientePorCpf() {
-        String cpfBusca = JOptionPane.showInputDialog(this, "Digite o CPF do cliente que deseja editar:");
+        String cpfBusca = cpfDaLinhaSelecionada();
+        if (cpfBusca == null) {
+            cpfBusca = JOptionPane.showInputDialog(this, "Digite o CPF do cliente que deseja editar:");
+        }
         if (cpfBusca == null || cpfBusca.trim().isEmpty()) return;
 
         String sqlBusca = "SELECT * FROM Cliente WHERE cpf = ?";
@@ -140,7 +163,10 @@ public class PainelClientes extends JPanel {
     }
 
     private void excluirClientePorCpf() {
-        String cpfBusca = JOptionPane.showInputDialog(this, "Digite o CPF do cliente que deseja excluir:");
+        String cpfBusca = cpfDaLinhaSelecionada();
+        if (cpfBusca == null) {
+            cpfBusca = JOptionPane.showInputDialog(this, "Digite o CPF do cliente que deseja excluir:");
+        }
         if (cpfBusca == null || cpfBusca.trim().isEmpty()) return;
 
         String sqlBusca = "SELECT nome FROM Cliente WHERE cpf = ?";

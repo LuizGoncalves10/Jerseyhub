@@ -34,16 +34,44 @@ public class UIUtils {
         return titulo;
     }
 
-    public static JPanel criarBarraTopo(String titulo, JButton... botoes) {
+    public static JPanel criarBarraTopo(String titulo, JComponent... componentes) {
         JPanel barra = new JPanel(new BorderLayout());
         barra.setOpaque(false);
         barra.add(criarTituloSecao(titulo), BorderLayout.WEST);
 
         JPanel painelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         painelBotoes.setOpaque(false);
-        for (JButton botao : botoes) painelBotoes.add(botao);
+        for (JComponent componente : componentes) painelBotoes.add(componente);
         barra.add(painelBotoes, BorderLayout.EAST);
         return barra;
+    }
+
+    public static JTextField criarCampoBusca(String textoDeAjuda) {
+        JTextField campo = new JTextField();
+        campo.setPreferredSize(new Dimension(240, 34));
+        campo.putClientProperty("JTextField.placeholderText", textoDeAjuda);
+        campo.putClientProperty("JTextField.showClearButton", true);
+        return campo;
+    }
+
+    //executa a acao 300 ms depois que o usuario para de digitar (evita uma consulta por letra)
+    public static void executarAoDigitar(JTextField campo, Runnable acao) {
+        Timer espera = new Timer(300, e -> acao.run());
+        espera.setRepeats(false);
+        campo.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { espera.restart(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { espera.restart(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { espera.restart(); }
+        });
+    }
+
+    public static JLabel criarContador() {
+        JLabel contador = new JLabel(" ");
+        contador.setForeground(COR_TEXTO_SUAVE);
+        return contador;
     }
 
     public static JButton criarBotao(String texto, Color cor) {

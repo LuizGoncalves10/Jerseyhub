@@ -8,7 +8,9 @@ import java.util.Vector;
 
 public class PainelCamisas extends JPanel {
     private JTable tabelaCamisas;
-    private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe ORDER BY c.id_camisa";
+    private JTextField campoBusca;
+    private JLabel lblTotalCamisas;
+    private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.modelo LIKE ? OR COALESCE(e.nome, 'Sem Equipe') LIKE ? ORDER BY c.id_camisa";
 
     public PainelCamisas() {
         UIUtils.configurarPainelBase(this);
@@ -23,9 +25,14 @@ public class PainelCamisas extends JPanel {
         btnExcluirCamisa.addActionListener(e -> excluirCamisa());
         btnAtualizarCamisas.addActionListener(e -> atualizarListaCamisas());
 
+        campoBusca = UIUtils.criarCampoBusca("Buscar por modelo ou equipe...");
+        UIUtils.executarAoDigitar(campoBusca, this::atualizarListaCamisas);
+
         tabelaCamisas = UIUtils.criarTabela();
-        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa, btnAtualizarCamisas), BorderLayout.NORTH);
+        lblTotalCamisas = UIUtils.criarContador();
+        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", campoBusca, btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa, btnAtualizarCamisas), BorderLayout.NORTH);
         add(UIUtils.criarRolagem(tabelaCamisas), BorderLayout.CENTER);
+        add(lblTotalCamisas, BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(this::atualizarListaCamisas);
     }
@@ -33,8 +40,12 @@ public class PainelCamisas extends JPanel {
     private void atualizarListaCamisas() {
         try (Connection conexao = ConexaoBanco.conectar()) {
             if (conexao == null) return;
-            try (PreparedStatement stmt = conexao.prepareStatement(SQL_LISTA_CAMISAS);
-                 ResultSet rs = stmt.executeQuery()) {
+            try (PreparedStatement stmt = conexao.prepareStatement(SQL_LISTA_CAMISAS)) {
+                //busca vazia vira "%%", que traz todas as camisas
+                String termo = "%" + campoBusca.getText().trim() + "%";
+                stmt.setString(1, termo);
+                stmt.setString(2, termo);
+                ResultSet rs = stmt.executeQuery();
 
                 ResultSetMetaData metaData = rs.getMetaData();
                 int columnCount = metaData.getColumnCount();
@@ -53,6 +64,7 @@ public class PainelCamisas extends JPanel {
                 }
 
                 tabelaCamisas.setModel(UIUtils.criarModeloSomenteLeitura(dados, colunas));
+                lblTotalCamisas.setText(dados.size() + " camisa(s) encontrada(s)");
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar lista: " + ex.getMessage());
@@ -96,8 +108,19 @@ public class PainelCamisas extends JPanel {
         }
     }
 
+    //ID da linha selecionada na tabela, ou null se nenhuma linha estiver selecionada
+    private String idDaLinhaSelecionada() {
+        int linha = tabelaCamisas.getSelectedRow();
+        if (linha == -1) return null;
+        int colunaId = tabelaCamisas.getColumnModel().getColumnIndex("ID");
+        return String.valueOf(tabelaCamisas.getValueAt(linha, colunaId));
+    }
+
     private void editarCamisa() {
-        String idBusca = JOptionPane.showInputDialog(this, "Digite o ID da camisa que deseja editar:");
+        String idBusca = idDaLinhaSelecionada();
+        if (idBusca == null) {
+            idBusca = JOptionPane.showInputDialog(this, "Digite o ID da camisa que deseja editar:");
+        }
         if (idBusca == null || idBusca.trim().isEmpty()) return;
 
         String sqlBusca = "SELECT * FROM Camisa WHERE id_camisa = ?";
@@ -158,7 +181,10 @@ public class PainelCamisas extends JPanel {
     }
 
     private void excluirCamisa() {
-        String idBusca = JOptionPane.showInputDialog(this, "Digite o ID da camisa que deseja excluir:");
+        String idBusca = idDaLinhaSelecionada();
+        if (idBusca == null) {
+            idBusca = JOptionPane.showInputDialog(this, "Digite o ID da camisa que deseja excluir:");
+        }
         if (idBusca == null || idBusca.trim().isEmpty()) return;
 
         String sqlBusca = "SELECT modelo, versao FROM Camisa WHERE id_camisa = ?";
