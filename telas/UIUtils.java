@@ -7,8 +7,8 @@ import java.awt.*;
 import java.util.Vector;
 
 public class UIUtils {
-    public static final Color COR_PRIMARIA = Color.decode("#14532D");
-    public static final Color COR_SUCESSO = Color.decode("#2EA05F");
+    public static final Color COR_PRIMARIA = Color.decode("#134E4A");
+    public static final Color COR_SUCESSO = Color.decode("#14B8A6");
     public static final Color COR_EDICAO = Color.decode("#2F6FD0");
     public static final Color COR_PERIGO = Color.decode("#C93C37");
     public static final Color COR_NEUTRA = Color.decode("#484F58");
@@ -18,8 +18,8 @@ public class UIUtils {
     public static final Color COR_TEXTO = Color.decode("#E6EDF3");
     public static final Color COR_TEXTO_SUAVE = Color.decode("#8B949E");
     public static final Color COR_LINHA_ALTERNADA = Color.decode("#23282E");
-    public static final Color COR_SELECAO = Color.decode("#1C4A30");
-    public static final Color COR_DESTAQUE_FUNDO = Color.decode("#183326");
+    public static final Color COR_SELECAO = Color.decode("#134E4A");
+    public static final Color COR_DESTAQUE_FUNDO = Color.decode("#102E2C");
 
     public static void configurarPainelBase(JPanel painel) {
         painel.setLayout(new BorderLayout(0, 12));
@@ -65,6 +65,16 @@ public class UIUtils {
             public void removeUpdate(javax.swing.event.DocumentEvent e) { espera.restart(); }
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) { espera.restart(); }
+        });
+    }
+
+    //recarrega os dados sempre que a tela aparece (ao ser escolhida no menu lateral)
+    public static void recarregarAoExibir(JComponent tela, Runnable acao) {
+        tela.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentShown(java.awt.event.ComponentEvent e) {
+                acao.run();
+            }
         });
     }
 

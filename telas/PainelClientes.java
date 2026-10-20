@@ -15,26 +15,25 @@ public class PainelClientes extends JPanel {
     public PainelClientes() {
         UIUtils.configurarPainelBase(this);
 
-        JButton btnInserirCliente = UIUtils.criarBotao("+ Inserir Cliente", UIUtils.COR_SUCESSO);
-        JButton btnEditarCliente = UIUtils.criarBotao("Editar Cliente", UIUtils.COR_EDICAO);
-        JButton btnExcluirCliente = UIUtils.criarBotao("Excluir Cliente", UIUtils.COR_PERIGO);
-        JButton btnAtualizarClientes = UIUtils.criarBotao("Atualizar", UIUtils.COR_NEUTRA);
+        JButton btnInserirCliente = UIUtils.criarBotao("Inserir", UIUtils.COR_SUCESSO);
+        JButton btnEditarCliente = UIUtils.criarBotao("Editar", UIUtils.COR_EDICAO);
+        JButton btnExcluirCliente = UIUtils.criarBotao("Excluir", UIUtils.COR_PERIGO);
 
         btnInserirCliente.addActionListener(e -> inserirCliente());
         btnEditarCliente.addActionListener(e -> editarClientePorCpf());
         btnExcluirCliente.addActionListener(e -> excluirClientePorCpf());
-        btnAtualizarClientes.addActionListener(e -> atualizarListaClientes());
 
         campoBusca = UIUtils.criarCampoBusca("Buscar por nome ou CPF...");
         UIUtils.executarAoDigitar(campoBusca, this::atualizarListaClientes);
 
         tabelaClientes = UIUtils.criarTabela();
         lblTotalClientes = UIUtils.criarContador();
-        add(UIUtils.criarBarraTopo("Gerenciamento de Clientes", campoBusca, btnInserirCliente, btnEditarCliente, btnExcluirCliente, btnAtualizarClientes), BorderLayout.NORTH);
+        add(UIUtils.criarBarraTopo("Gerenciamento de Clientes", campoBusca, btnInserirCliente, btnEditarCliente, btnExcluirCliente), BorderLayout.NORTH);
         add(UIUtils.criarRolagem(tabelaClientes), BorderLayout.CENTER);
         add(lblTotalClientes, BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(this::atualizarListaClientes);
+        UIUtils.recarregarAoExibir(this, this::atualizarListaClientes);
     }
 
     private void atualizarListaClientes() {

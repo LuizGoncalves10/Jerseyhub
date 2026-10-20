@@ -8,9 +8,9 @@ import java.util.Collections;
 public class Dashboard extends JFrame {
 
     //cores da barra lateral
-    private static final Color COR_SIDEBAR = Color.decode("#0F1E16");
-    private static final Color COR_SIDEBAR_ATIVO = Color.decode("#1C4A30");
-    private static final Color COR_SIDEBAR_TEXTO = Color.decode("#A7D7B8");
+    private static final Color COR_SIDEBAR = Color.decode("#0B1F1E");
+    private static final Color COR_SIDEBAR_ATIVO = Color.decode("#134E4A");
+    private static final Color COR_SIDEBAR_TEXTO = Color.decode("#99F6E4");
 
     private final CardLayout trocaDeTelas = new CardLayout();
     private final JPanel painelConteudo = new JPanel(trocaDeTelas);
@@ -36,7 +36,7 @@ public class Dashboard extends JFrame {
     }
 
     private static void configurarAparencia() {
-        FlatLaf.setGlobalExtraDefaults(Collections.singletonMap("@accentColor", "#2EA05F"));
+        FlatLaf.setGlobalExtraDefaults(Collections.singletonMap("@accentColor", UIUtils.hex(UIUtils.COR_SUCESSO)));
         FlatDarkLaf.setup();
 
         UIManager.put("defaultFont", new Font("Segoe UI", Font.PLAIN, 13));

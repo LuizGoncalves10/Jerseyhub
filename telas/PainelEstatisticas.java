@@ -29,9 +29,6 @@ public class PainelEstatisticas extends JPanel {
     public PainelEstatisticas() {
         UIUtils.configurarPainelBase(this);
 
-        JButton btnAtualizar = UIUtils.criarBotao("Atualizar Estatísticas", UIUtils.COR_SUCESSO);
-        btnAtualizar.addActionListener(e -> atualizarEstatisticas());
-
         JPanel painelConteudo = new JPanel();
         painelConteudo.setLayout(new BoxLayout(painelConteudo, BoxLayout.Y_AXIS));
         painelConteudo.setBackground(UIUtils.COR_FUNDO);
@@ -92,10 +89,11 @@ public class PainelEstatisticas extends JPanel {
         JScrollPane rolagem = UIUtils.criarRolagem(painelConteudo);
         rolagem.setBorder(null);
 
-        add(UIUtils.criarBarraTopo("Estatísticas do Negócio", btnAtualizar), BorderLayout.NORTH);
+        add(UIUtils.criarBarraTopo("Estatísticas do Negócio"), BorderLayout.NORTH);
         add(rolagem, BorderLayout.CENTER);
 
         SwingUtilities.invokeLater(this::atualizarEstatisticas);
+        UIUtils.recarregarAoExibir(this, this::atualizarEstatisticas);
     }
 
     private JLabel criarLabelDestaque() {
@@ -233,8 +231,8 @@ public class PainelEstatisticas extends JPanel {
 
                 lblMediaEstoque.setText(String.format("<html><b>Média de peças por modelo:</b> %.1f</html>", mediaEstoque));
                 lblConfiancaEstoque.setText(String.format(
-                    "<html><b>Intervalo de Confiança (95%%):</b><br>A média populacional de estoque está entre<br><font color='#2EA05F'><b>%.1f e %.1f</b></font> unidades por modelo.</html>", 
-                    limiteInferior, limiteSuperior
+                    "<html><b>Intervalo de Confiança (95%%):</b><br>A média populacional de estoque está entre<br><font color='%s'><b>%.1f e %.1f</b></font> unidades por modelo.</html>",
+                    UIUtils.hex(UIUtils.COR_SUCESSO), limiteInferior, limiteSuperior
                 ));
             }
 

@@ -15,26 +15,25 @@ public class PainelCamisas extends JPanel {
     public PainelCamisas() {
         UIUtils.configurarPainelBase(this);
 
-        JButton btnInserirCamisa = UIUtils.criarBotao("+ Inserir Camisa", UIUtils.COR_SUCESSO);
-        JButton btnEditarCamisa = UIUtils.criarBotao("Editar Camisa", UIUtils.COR_EDICAO);
-        JButton btnExcluirCamisa = UIUtils.criarBotao("Excluir Camisa", UIUtils.COR_PERIGO);
-        JButton btnAtualizarCamisas = UIUtils.criarBotao("Atualizar", UIUtils.COR_NEUTRA);
+        JButton btnInserirCamisa = UIUtils.criarBotao("Inserir", UIUtils.COR_SUCESSO);
+        JButton btnEditarCamisa = UIUtils.criarBotao("Editar", UIUtils.COR_EDICAO);
+        JButton btnExcluirCamisa = UIUtils.criarBotao("Excluir", UIUtils.COR_PERIGO);
 
         btnInserirCamisa.addActionListener(e -> inserirCamisa());
         btnEditarCamisa.addActionListener(e -> editarCamisa());
         btnExcluirCamisa.addActionListener(e -> excluirCamisa());
-        btnAtualizarCamisas.addActionListener(e -> atualizarListaCamisas());
 
         campoBusca = UIUtils.criarCampoBusca("Buscar por modelo ou equipe...");
         UIUtils.executarAoDigitar(campoBusca, this::atualizarListaCamisas);
 
         tabelaCamisas = UIUtils.criarTabela();
         lblTotalCamisas = UIUtils.criarContador();
-        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", campoBusca, btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa, btnAtualizarCamisas), BorderLayout.NORTH);
+        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", campoBusca, btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa), BorderLayout.NORTH);
         add(UIUtils.criarRolagem(tabelaCamisas), BorderLayout.CENTER);
         add(lblTotalCamisas, BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(this::atualizarListaCamisas);
+        UIUtils.recarregarAoExibir(this, this::atualizarListaCamisas);
     }
 
     private void atualizarListaCamisas() {
