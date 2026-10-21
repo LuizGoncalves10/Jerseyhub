@@ -3,6 +3,10 @@ package telas;
 import banco.ConexaoBanco;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.*;
 import java.util.Vector;
 
@@ -26,10 +30,43 @@ public class PainelCamisas extends JPanel {
         campoBusca = UIUtils.criarCampoBusca("Buscar por modelo ou equipe...");
         UIUtils.executarAoDigitar(campoBusca, this::atualizarListaCamisas);
 
+        campoBusca.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (tabelaCamisas != null) {
+                    tabelaCamisas.clearSelection();
+                }
+            }
+        });
+
         tabelaCamisas = UIUtils.criarTabela();
         lblTotalCamisas = UIUtils.criarContador();
+        
+        JScrollPane scrollPaneTabela = UIUtils.criarRolagem(tabelaCamisas);
+        
+        scrollPaneTabela.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                tabelaCamisas.clearSelection();
+            }
+        });
+        
+        scrollPaneTabela.getViewport().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                tabelaCamisas.clearSelection();
+            }
+        });
+
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                tabelaCamisas.clearSelection();
+            }
+        });
+
         add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", campoBusca, btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa), BorderLayout.NORTH);
-        add(UIUtils.criarRolagem(tabelaCamisas), BorderLayout.CENTER);
+        add(scrollPaneTabela, BorderLayout.CENTER);
         add(lblTotalCamisas, BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(this::atualizarListaCamisas);
@@ -40,7 +77,6 @@ public class PainelCamisas extends JPanel {
         try (Connection conexao = ConexaoBanco.conectar()) {
             if (conexao == null) return;
             try (PreparedStatement stmt = conexao.prepareStatement(SQL_LISTA_CAMISAS)) {
-                //busca vazia vira "%%", que traz todas as camisas
                 String termo = "%" + campoBusca.getText().trim() + "%";
                 stmt.setString(1, termo);
                 stmt.setString(2, termo);
@@ -70,16 +106,69 @@ public class PainelCamisas extends JPanel {
         }
     }
 
-    private void inserirCamisa() {
-        String modelo = JOptionPane.showInputDialog(this, "Modelo:");
-        String versao = JOptionPane.showInputDialog(this, "Versão (Torcedor ou Jogador):");
-        String tamanho = JOptionPane.showInputDialog(this, "Tamanho (P, M, G, GG):");
-        String precoStr = JOptionPane.showInputDialog(this, "Preço (ex: 250.00):");
-        String anoStr = JOptionPane.showInputDialog(this, "Ano:");
-        String estoqueStr = JOptionPane.showInputDialog(this, "Quantidade em Estoque:");
-        String idEquipeStr = JOptionPane.showInputDialog(this, "ID da Equipe (deixe em branco se nulo):");
+    private JPanel criarPainelFormulario(JTextField txtModelo, JComboBox<String> cbVersao, JComboBox<String> cbTamanho, 
+                                         JTextField txtPreco, JTextField txtAno, JTextField txtEstoque, JTextField txtIdEquipe) {
+        JPanel painelPrincipal = new JPanel(new GridLayout(4, 1, 10, 10));
+        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        if (modelo != null && versao != null && tamanho != null && precoStr != null && anoStr != null && estoqueStr != null) {
+        JPanel pnlLinha1 = new JPanel(new BorderLayout(5, 5));
+        pnlLinha1.add(new JLabel("Modelo:"), BorderLayout.WEST);
+        pnlLinha1.add(txtModelo, BorderLayout.CENTER);
+
+        JPanel pnlLinha2 = new JPanel(new GridLayout(1, 4, 10, 10));
+        pnlLinha2.add(new JLabel("Versão:"));
+        pnlLinha2.add(cbVersao);
+        pnlLinha2.add(new JLabel("Tamanho:"));
+        pnlLinha2.add(cbTamanho);
+
+        JPanel pnlLinha3 = new JPanel(new GridLayout(1, 4, 10, 10));
+        pnlLinha3.add(new JLabel("Preço (R$):"));
+        pnlLinha3.add(txtPreco);
+        pnlLinha3.add(new JLabel("Ano:"));
+        pnlLinha3.add(txtAno);
+
+        JPanel pnlLinha4 = new JPanel(new GridLayout(1, 4, 10, 10));
+        pnlLinha4.add(new JLabel("Estoque:"));
+        pnlLinha4.add(txtEstoque);
+        pnlLinha4.add(new JLabel("ID Equipe:"));
+        pnlLinha4.add(txtIdEquipe);
+
+        painelPrincipal.add(pnlLinha1);
+        painelPrincipal.add(pnlLinha2);
+        painelPrincipal.add(pnlLinha3);
+        painelPrincipal.add(pnlLinha4);
+
+        return painelPrincipal;
+    }
+
+    private void inserirCamisa() {
+        JTextField txtModelo = new JTextField(20);
+        JComboBox<String> cbVersao = new JComboBox<>(new String[]{"Torcedor", "Jogador"});
+        JComboBox<String> cbTamanho = new JComboBox<>(new String[]{"P", "M", "G", "GG"});
+        JTextField txtPreco = new JTextField();
+        JTextField txtAno = new JTextField();
+        JTextField txtEstoque = new JTextField();
+        JTextField txtIdEquipe = new JTextField();
+
+        JPanel painelForm = criarPainelFormulario(txtModelo, cbVersao, cbTamanho, txtPreco, txtAno, txtEstoque, txtIdEquipe);
+
+        int resultado = JOptionPane.showConfirmDialog(this, painelForm, "Inserir Nova Camisa", 
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (resultado == JOptionPane.OK_OPTION) {
+            String modelo = txtModelo.getText().trim();
+            String versao = cbVersao.getSelectedItem().toString();
+            String tamanho = cbTamanho.getSelectedItem().toString();
+            String precoStr = txtPreco.getText().trim().replace(",", ".");
+            String anoStr = txtAno.getText().trim();
+            String estoqueStr = txtEstoque.getText().trim();
+            String idEquipeStr = txtIdEquipe.getText().trim();
+
+            if (modelo.isEmpty() || precoStr.isEmpty() || anoStr.isEmpty() || estoqueStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+
             String sql = "INSERT INTO Camisa (modelo, versao, tamanho, preco, ano, quantidade_estoque, fk_id_equipe) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (Connection conexao = ConexaoBanco.conectar();
                  PreparedStatement stmt = conexao.prepareStatement(sql)) {
@@ -90,7 +179,7 @@ public class PainelCamisas extends JPanel {
                 stmt.setInt(5, Integer.parseInt(anoStr));
                 stmt.setInt(6, Integer.parseInt(estoqueStr));
                 
-                if (idEquipeStr == null || idEquipeStr.trim().isEmpty()) {
+                if (idEquipeStr.isEmpty()) {
                     stmt.setNull(7, java.sql.Types.INTEGER);
                 } else {
                     stmt.setInt(7, Integer.parseInt(idEquipeStr));
@@ -100,14 +189,13 @@ public class PainelCamisas extends JPanel {
                 JOptionPane.showMessageDialog(this, "Camisa inserida com sucesso!");
                 atualizarListaCamisas();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Erro: Certifique-se de que Preço, Ano, Estoque e Equipe são números válidos.");
+                JOptionPane.showMessageDialog(this, "Erro: Certifique-se de que Preço, Ano, Estoque e Equipe contêm apenas números válidos.");
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro ao inserir: " + ex.getMessage());
             }
         }
     }
 
-    //ID da linha selecionada na tabela, ou null se nenhuma linha estiver selecionada
     private String idDaLinhaSelecionada() {
         int linha = tabelaCamisas.getSelectedRow();
         if (linha == -1) return null;
@@ -133,24 +221,39 @@ public class PainelCamisas extends JPanel {
                 return;
             }
 
-            String modeloAtual = rs.getString("modelo");
-            String versaoAtual = rs.getString("versao");
-            String tamanhoAtual = rs.getString("tamanho");
-            double precoAtual = rs.getDouble("preco");
-            int anoAtual = rs.getInt("ano");
-            int estoqueAtual = rs.getInt("quantidade_estoque");
+            JTextField txtModelo = new JTextField(rs.getString("modelo"));
+            JComboBox<String> cbVersao = new JComboBox<>(new String[]{"Torcedor", "Jogador"});
+            cbVersao.setSelectedItem(rs.getString("versao"));
+            JComboBox<String> cbTamanho = new JComboBox<>(new String[]{"P", "M", "G", "GG"});
+            cbTamanho.setSelectedItem(rs.getString("tamanho"));
+            JTextField txtPreco = new JTextField(String.valueOf(rs.getDouble("preco")));
+            JTextField txtAno = new JTextField(String.valueOf(rs.getInt("ano")));
+            JTextField txtEstoque = new JTextField(String.valueOf(rs.getInt("quantidade_estoque")));
+            
             int idEquipeAtual = rs.getInt("fk_id_equipe");
             boolean equipeNula = rs.wasNull();
+            JTextField txtIdEquipe = new JTextField(equipeNula ? "" : String.valueOf(idEquipeAtual));
 
-            String modelo = JOptionPane.showInputDialog(this, "Modelo:", modeloAtual);
-            String versao = JOptionPane.showInputDialog(this, "Versão (Torcedor ou Jogador):", versaoAtual);
-            String tamanho = JOptionPane.showInputDialog(this, "Tamanho (P, M, G, GG):", tamanhoAtual);
-            String precoStr = JOptionPane.showInputDialog(this, "Preço:", String.valueOf(precoAtual));
-            String anoStr = JOptionPane.showInputDialog(this, "Ano:", String.valueOf(anoAtual));
-            String estoqueStr = JOptionPane.showInputDialog(this, "Quantidade em Estoque:", String.valueOf(estoqueAtual));
-            String idEquipeStr = JOptionPane.showInputDialog(this, "ID da Equipe (deixe em branco se nulo):", equipeNula ? "" : String.valueOf(idEquipeAtual));
+            JPanel painelForm = criarPainelFormulario(txtModelo, cbVersao, cbTamanho, txtPreco, txtAno, txtEstoque, txtIdEquipe);
 
-            if (modelo != null && versao != null && tamanho != null && precoStr != null && anoStr != null && estoqueStr != null) {
+            Object[] options = {"Salvar Alterações", "Cancelar"};
+            int resultado = JOptionPane.showOptionDialog(this, painelForm, "Editar Camisa (ID: " + idBusca + ")", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+            if (resultado == JOptionPane.OK_OPTION) {
+                String modelo = txtModelo.getText().trim();
+                String versao = cbVersao.getSelectedItem().toString();
+                String tamanho = cbTamanho.getSelectedItem().toString();
+                String precoStr = txtPreco.getText().trim().replace(",", ".");
+                String anoStr = txtAno.getText().trim();
+                String estoqueStr = txtEstoque.getText().trim();
+                String idEquipeStr = txtIdEquipe.getText().trim();
+
+                if (modelo.isEmpty() || precoStr.isEmpty() || anoStr.isEmpty() || estoqueStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Por favor, preencha todos os campos obrigatórios.");
+                    return;
+                }
+
                 String sqlUpdate = "UPDATE Camisa SET modelo = ?, versao = ?, tamanho = ?, preco = ?, ano = ?, quantidade_estoque = ?, fk_id_equipe = ? WHERE id_camisa = ?";
                 try (PreparedStatement stmtUpdate = conexao.prepareStatement(sqlUpdate)) {
                     stmtUpdate.setString(1, modelo);
@@ -160,7 +263,7 @@ public class PainelCamisas extends JPanel {
                     stmtUpdate.setInt(5, Integer.parseInt(anoStr));
                     stmtUpdate.setInt(6, Integer.parseInt(estoqueStr));
                     
-                    if (idEquipeStr == null || idEquipeStr.trim().isEmpty()) {
+                    if (idEquipeStr.isEmpty()) {
                         stmtUpdate.setNull(7, java.sql.Types.INTEGER);
                     } else {
                         stmtUpdate.setInt(7, Integer.parseInt(idEquipeStr));
