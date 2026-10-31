@@ -7,7 +7,6 @@ import java.util.Collections;
 
 public class Dashboard extends JFrame {
 
-    //cores da barra lateral
     private static final Color COR_SIDEBAR = Color.decode("#0B1F1E");
     private static final Color COR_SIDEBAR_ATIVO = Color.decode("#134E4A");
     private static final Color COR_SIDEBAR_TEXTO = Color.decode("#99F6E4");
@@ -23,9 +22,9 @@ public class Dashboard extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        //cada tela fica em um "cartao"; o menu lateral escolhe qual cartao aparece
         painelConteudo.add(new PainelClientes(), "Clientes");
         painelConteudo.add(new PainelCamisas(), "Camisas");
+        painelConteudo.add(new PainelFuncionarios(), "Funcionarios");
         painelConteudo.add(new PainelConsultas(), "Consultas");
         painelConteudo.add(new PainelEstatisticas(), "Estatisticas");
 
@@ -48,7 +47,6 @@ public class Dashboard extends JFrame {
         UIManager.put("Panel.background", UIUtils.COR_FUNDO);
     }
 
-    //barra lateral
     private JPanel criarSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
@@ -71,16 +69,19 @@ public class Dashboard extends JFrame {
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Camisas", ""));
         sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(criarItemMenu("Funcionarios", ""));
+        sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Consultas", ""));
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Estatisticas", ""));
         sidebar.add(Box.createVerticalGlue());
 
         for (Component componente : sidebar.getComponents()) {
-            ((JComponent) componente).setAlignmentX(Component.LEFT_ALIGNMENT);
+            if (componente instanceof JComponent) {
+                ((JComponent) componente).setAlignmentX(Component.LEFT_ALIGNMENT);
+            }
         }
 
-        //comeca mostrando a primeira tela
         grupoMenu.getElements().nextElement().setSelected(true);
         return sidebar;
     }
@@ -106,7 +107,6 @@ public class Dashboard extends JFrame {
         return item;
     }
 
-    //desenha um icone usando a fonte de simbolos do Windows (Segoe MDL2 Assets)
     private static class IconeFonte implements Icon {
         private final String simbolo;
 
