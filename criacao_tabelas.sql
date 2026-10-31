@@ -17,8 +17,6 @@ CREATE TABLE Equipe (
         CHECK (equipe_tipo IN (1, 2))
 );
 
-DESCRIBE equipe;
-
 CREATE TABLE Clube (
     fk_id_equipe INT PRIMARY KEY,
     estadio VARCHAR(100) NOT NULL,
@@ -30,8 +28,6 @@ CREATE TABLE Clube (
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
-
-DESCRIBE clube;
 
 CREATE TABLE Selecao (
     fk_id_equipe INT PRIMARY KEY,
@@ -133,6 +129,7 @@ CREATE TABLE Pedido (
     valor_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     data_compra DATE NOT NULL,
     fk_id_cliente INT NOT NULL,
+    fk_id_funcionario INT NOT NULL,
 
     CONSTRAINT chk_pedido_valor
         CHECK (valor_total >= 0),
@@ -140,6 +137,12 @@ CREATE TABLE Pedido (
     CONSTRAINT fk_pedido_cliente
         FOREIGN KEY (fk_id_cliente)
         REFERENCES Cliente(id_cliente)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_pedido_funcionario
+        FOREIGN KEY (fk_id_funcionario)
+        REFERENCES Funcionario(id_funcionario)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -185,5 +188,3 @@ CREATE TABLE Personalizacao (
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
-
-SHOW TABLES;
