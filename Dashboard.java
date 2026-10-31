@@ -25,6 +25,7 @@ public class Dashboard extends JFrame {
         painelConteudo.add(new PainelClientes(), "Clientes");
         painelConteudo.add(new PainelCamisas(), "Camisas");
         painelConteudo.add(new PainelFuncionarios(), "Funcionarios");
+        painelConteudo.add(new PainelPedidos(), "Pedidos");
         painelConteudo.add(new PainelConsultas(), "Consultas");
         painelConteudo.add(new PainelEstatisticas(), "Estatisticas");
 
@@ -70,6 +71,8 @@ public class Dashboard extends JFrame {
         sidebar.add(criarItemMenu("Camisas", ""));
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Funcionarios", ""));
+        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(criarItemMenu("Pedidos", ""));
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Consultas", ""));
         sidebar.add(Box.createVerticalStrut(4));
