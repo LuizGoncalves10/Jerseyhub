@@ -18,7 +18,9 @@ public class PainelConsultas extends JPanel {
         String[] opcoes = {
             "Selecione", "Clientes TOP", "Acima da Media", "Relatorio",
             "Estoque", "Clientes Frequentes", "Camisas Sem Venda",
-            "Ticket Medio", "Camisa Mais Cara", "Clientes Sem Compras"
+            "Ticket Medio", "Camisa Mais Cara", "Clientes Sem Compras",
+            "Funcionarios Sem Vendas", "Historico Completo", 
+            "Supervisores Ativos", "Maior Venda"
         };
         comboConsultas = new JComboBox<>(opcoes);
         comboConsultas.setPreferredSize(new Dimension(220, 32));
@@ -83,6 +85,14 @@ public class PainelConsultas extends JPanel {
             descricao = "Subconsulta correlacionada: a camisa mais cara de cada equipe.";
         } else if ("Clientes Sem Compras".equals(selecao)) {
             descricao = "Subconsulta com NOT IN: clientes cadastrados que nunca fizeram um pedido.";
+        } else if ("Funcionarios Sem Vendas".equals(selecao)) {
+            descricao = "Anti Join (LEFT JOIN com IS NULL): funcionários cadastrados que nunca realizaram uma venda.";
+        } else if ("Historico Completo".equals(selecao)) {
+            descricao = "Full Outer Join (via UNION): lista simultânea de todos os funcionários e todos os pedidos.";
+        } else if ("Supervisores Ativos".equals(selecao)) {
+            descricao = "Subconsulta (IN): lista os funcionários que ocupam posições de supervisão.";
+        } else if ("Maior Venda".equals(selecao)) {
+            descricao = "Subconsulta (MAX): exibe o vendedor responsável pelo pedido de maior valor transacionado.";
         } else {
             descricao = "Selecione uma consulta e clique em Executar.";
         }
@@ -112,6 +122,14 @@ public class PainelConsultas extends JPanel {
             sql = "SELECT e.nome AS Equipe, c.modelo AS Modelo, c.preco AS Preco FROM Camisa c JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.preco = (SELECT MAX(preco) FROM Camisa c2 WHERE c2.fk_id_equipe = e.id_equipe)";
         } else if ("Clientes Sem Compras".equals(selecao)) {
             sql = "SELECT cl.nome AS Cliente, cl.cpf AS CPF FROM Cliente cl WHERE cl.id_cliente NOT IN (SELECT fk_id_cliente FROM Pedido)";
+        } else if ("Funcionarios Sem Vendas".equals(selecao)) {
+            sql = "SELECT f.nome AS Funcionario, f.cargo AS Cargo FROM Funcionario f LEFT JOIN Pedido p ON f.id_funcionario = p.fk_id_funcionario WHERE p.id_pedido IS NULL";
+        } else if ("Historico Completo".equals(selecao)) {
+            sql = "SELECT f.nome AS Funcionario, p.id_pedido AS Pedido, p.valor_total AS Valor FROM Funcionario f LEFT JOIN Pedido p ON f.id_funcionario = p.fk_id_funcionario UNION SELECT f.nome AS Funcionario, p.id_pedido AS Pedido, p.valor_total AS Valor FROM Funcionario f RIGHT JOIN Pedido p ON f.id_funcionario = p.fk_id_funcionario";
+        } else if ("Supervisores Ativos".equals(selecao)) {
+            sql = "SELECT f.nome AS Funcionario, f.cargo AS Cargo FROM Funcionario f WHERE f.id_funcionario IN (SELECT fk_id_supervisor FROM Supervisao)";
+        } else if ("Maior Venda".equals(selecao)) {
+            sql = "SELECT f.nome AS Vendedor, p.id_pedido AS Pedido, p.valor_total AS Total_Venda FROM Pedido p JOIN Funcionario f ON p.fk_id_funcionario = f.id_funcionario WHERE p.valor_total = (SELECT MAX(valor_total) FROM Pedido)";
         } else {
             JOptionPane.showMessageDialog(this, "Selecione uma consulta válida.");
             return;
