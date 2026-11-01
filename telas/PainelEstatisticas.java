@@ -25,6 +25,8 @@ public class PainelEstatisticas extends JPanel {
     private JLabel lblConfiancaEstoque;
     
     private BoxplotPanel painelGrafico;
+    private BarChartPanel graficoFaturamento;
+    private BarChartPanel graficoVendedores;
 
     public PainelEstatisticas() {
         UIUtils.configurarPainelBase(this);
@@ -34,7 +36,6 @@ public class PainelEstatisticas extends JPanel {
         painelConteudo.setBackground(UIUtils.COR_FUNDO);
         painelConteudo.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        // Indicadores principais
         JPanel painelResumo = new JPanel(new GridLayout(1, 3, 16, 0));
         painelResumo.setOpaque(false);
         painelResumo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
@@ -47,7 +48,6 @@ public class PainelEstatisticas extends JPanel {
         painelResumo.add(criarCartao("Modelos Cadastrados", lblTotalCamisas, true));
         painelResumo.add(criarCartao("Peças em Estoque", lblTotalEstoque, true));
 
-        // Detalhamento analítico
         JPanel painelDetalhes = new JPanel(new GridLayout(1, 2, 16, 0));
         painelDetalhes.setOpaque(false);
         painelDetalhes.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
@@ -73,17 +73,28 @@ public class PainelEstatisticas extends JPanel {
         painelDetalhes.add(criarCartao("Comportamento dos Preços", infoPrecos, false));
         painelDetalhes.add(criarCartao("Análise de Estoque", infoEstoque, false));
 
-        // Visualização de distribuição
         painelGrafico = new BoxplotPanel();
         painelGrafico.setPreferredSize(new Dimension(800, 250));
         JPanel cartaoBoxplot = criarCartao("Distribuição de Preços (Boxplot)", painelGrafico, false);
         cartaoBoxplot.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
+
+        JPanel painelViews = new JPanel(new GridLayout(1, 2, 16, 0));
+        painelViews.setOpaque(false);
+        painelViews.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
+
+        graficoFaturamento = new BarChartPanel(true);
+        graficoVendedores = new BarChartPanel(true);
+
+        painelViews.add(criarCartao("Top 5: Faturamento por Equipe", graficoFaturamento, false));
+        painelViews.add(criarCartao("Top 5: Desempenho de Vendedores", graficoVendedores, false));
 
         painelConteudo.add(painelResumo);
         painelConteudo.add(Box.createRigidArea(new Dimension(0, 16)));
         painelConteudo.add(painelDetalhes);
         painelConteudo.add(Box.createRigidArea(new Dimension(0, 16)));
         painelConteudo.add(cartaoBoxplot);
+        painelConteudo.add(Box.createRigidArea(new Dimension(0, 16)));
+        painelConteudo.add(painelViews);
         painelConteudo.add(Box.createVerticalGlue());
 
         JScrollPane rolagem = UIUtils.criarRolagem(painelConteudo);
@@ -236,6 +247,28 @@ public class PainelEstatisticas extends JPanel {
                 ));
             }
 
+            List<String> equipes = new ArrayList<>();
+            List<Double> faturamentos = new ArrayList<>();
+            try (PreparedStatement stmt = conexao.prepareStatement("SELECT Equipe, Faturamento_Total FROM vw_faturamento_por_equipe ORDER BY Faturamento_Total DESC LIMIT 5");
+                 ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    equipes.add(rs.getString("Equipe"));
+                    faturamentos.add(rs.getDouble("Faturamento_Total"));
+                }
+            }
+            graficoFaturamento.setDados(equipes, faturamentos);
+
+            List<String> vendedores = new ArrayList<>();
+            List<Double> vendas = new ArrayList<>();
+            try (PreparedStatement stmt = conexao.prepareStatement("SELECT Vendedor, Valor_Total_Vendido FROM vw_desempenho_vendedores ORDER BY Valor_Total_Vendido DESC LIMIT 5");
+                 ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    vendedores.add(rs.getString("Vendedor"));
+                    vendas.add(rs.getDouble("Valor_Total_Vendido"));
+                }
+            }
+            graficoVendedores.setDados(vendedores, vendas);
+
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar estatísticas: " + ex.getMessage());
         }
@@ -338,6 +371,66 @@ public class PainelEstatisticas extends JPanel {
 
         private String formatarMoeda(double valor) {
             return String.format("R$ %.2f", valor);
+        }
+    }
+
+    private class BarChartPanel extends JPanel {
+        private List<String> labels = new ArrayList<>();
+        private List<Double> values = new ArrayList<>();
+        private boolean isCurrency;
+
+        public BarChartPanel(boolean isCurrency) {
+            this.isCurrency = isCurrency;
+            setOpaque(false);
+            setPreferredSize(new Dimension(400, 200));
+        }
+
+        public void setDados(List<String> labels, List<Double> values) {
+            this.labels = labels;
+            this.values = values;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (labels.isEmpty()) return;
+
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            double maxVal = 0;
+            for (double v : values) {
+                if (v > maxVal) maxVal = v;
+            }
+            if (maxVal == 0) maxVal = 1;
+
+            int width = getWidth();
+            int height = getHeight();
+            int barHeight = Math.min(25, (height - 20) / labels.size() - 10);
+            int startY = 20;
+            int labelWidth = 140;
+            int maxBarWidth = width - labelWidth - 100; 
+
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            FontMetrics fm = g2.getFontMetrics();
+
+            for (int i = 0; i < labels.size(); i++) {
+                String label = labels.get(i);
+                double val = values.get(i);
+
+                g2.setColor(UIUtils.COR_TEXTO);
+                String truncLabel = label.length() > 18 ? label.substring(0, 15) + "..." : label;
+                g2.drawString(truncLabel, 10, startY + i * (barHeight + 10) + barHeight / 2 + fm.getAscent() / 2 - 2);
+
+                int bWidth = (int) ((val / maxVal) * maxBarWidth);
+                g2.setColor(UIUtils.COR_SUCESSO);
+                g2.fillRoundRect(labelWidth, startY + i * (barHeight + 10), Math.max(bWidth, 5), barHeight, 8, 8);
+
+                g2.setColor(UIUtils.COR_TEXTO_SUAVE);
+                String valStr = isCurrency ? String.format("R$ %.2f", val) : String.format("%.0f", val);
+                g2.drawString(valStr, labelWidth + Math.max(bWidth, 5) + 10, startY + i * (barHeight + 10) + barHeight / 2 + fm.getAscent() / 2 - 2);
+            }
         }
     }
 }
