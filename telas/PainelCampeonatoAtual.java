@@ -102,7 +102,21 @@ public class PainelCampeonatoAtual extends JPanel {
         Vector<Vector<Object>> dados = new Vector<>();
 
         if (titulo.contains("Brasileirão Assaí")) {
-            dados = getDadosBrasileirao();
+            dados = getDadosBrasileiraoAssai();
+        } else if (titulo.contains("Brasileirão Série B")) {
+            dados = getDadosSerieB();
+        } else if (titulo.contains("Premier League")) {
+            dados = getDadosPremierLeague();
+        } else if (titulo.contains("Championship")) {
+            dados = getDadosChampionship();
+        } else if (titulo.contains("La Liga")) {
+            dados = getDadosLaLiga();
+        } else if (titulo.contains("Serie A")) {
+            dados = getDadosSerieA();
+        } else if (titulo.contains("Bundesliga")) {
+            dados = getDadosBundesliga();
+        } else if (titulo.contains("Ligue 1")) {
+            dados = getDadosLigue1();
         } else if (titulo.contains("Saudi Pro League")) {
             dados = getDadosSaudi();
         } else if (titulo.contains("MLS")) {
@@ -178,7 +192,7 @@ public class PainelCampeonatoAtual extends JPanel {
         }
     }
 
-    private Vector<Vector<Object>> getDadosBrasileirao() {
+    private Vector<Vector<Object>> getDadosBrasileiraoAssai() {
         Vector<Vector<Object>> d = new Vector<>();
         d.add(criarLinha(1, "Flamengo", 76, 34, 23, 7, 4, 71, 29, 42));
         d.add(criarLinha(2, "Palmeiras", 73, 34, 21, 10, 3, 62, 23, 39));
@@ -200,6 +214,181 @@ public class PainelCampeonatoAtual extends JPanel {
         d.add(criarLinha(18, "Grêmio", 37, 34, 9, 10, 15, 38, 47, -9));
         d.add(criarLinha(19, "Remo", 29, 34, 6, 11, 17, 37, 57, -20));
         d.add(criarLinha(20, "Chapecoense", 21, 33, 4, 9, 20, 33, 68, -35));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosSerieB() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "Novorizontino", 70, 37, 20, 10, 7, 66, 32, 34));
+        d.add(criarLinha(2, "Juventude", 68, 37, 19, 11, 7, 49, 26, 23));
+        d.add(criarLinha(3, "Vila Nova", 66, 37, 19, 9, 9, 53, 38, 15));
+        d.add(criarLinha(4, "Criciúma", 62, 37, 18, 8, 11, 38, 31, 7));
+        d.add(criarLinha(5, "Fortaleza", 62, 37, 16, 14, 7, 44, 33, 11));
+        d.add(criarLinha(6, "CRB", 58, 37, 17, 7, 13, 57, 51, 6));
+        d.add(criarLinha(7, "Goiás", 58, 37, 17, 7, 13, 39, 41, -2));
+        d.add(criarLinha(8, "Atlético-GO", 58, 37, 15, 13, 9, 45, 35, 10));
+        d.add(criarLinha(9, "Sport Recife", 55, 37, 14, 13, 10, 50, 42, 8));
+        d.add(criarLinha(10, "Operário", 54, 37, 15, 9, 13, 49, 50, -1));
+        d.add(criarLinha(11, "São Bernardo", 52, 37, 14, 10, 13, 52, 42, 10));
+        d.add(criarLinha(12, "Botafogo SP", 51, 37, 14, 9, 14, 45, 39, 6));
+        d.add(criarLinha(13, "Náutico", 49, 38, 13, 10, 15, 41, 49, -8));
+        d.add(criarLinha(14, "Cuiabá", 47, 37, 11, 14, 12, 34, 32, 2));
+        d.add(criarLinha(15, "Athletic", 47, 37, 11, 14, 12, 44, 44, 0));
+        d.add(criarLinha(16, "Ceará SC", 43, 37, 11, 10, 16, 38, 47, -9));
+        d.add(criarLinha(17, "Avaí", 40, 37, 11, 7, 19, 35, 47, -12));
+        d.add(criarLinha(18, "Londrina", 32, 38, 8, 8, 22, 45, 59, -14));
+        d.add(criarLinha(19, "América-MG", 29, 37, 8, 5, 24, 27, 55, -28));
+        d.add(criarLinha(20, "Ponte Preta", 15, 37, 3, 6, 28, 21, 79, -58));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosPremierLeague() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "Arsenal", 27, 10, 9, 0, 1, 15, 5, 10));
+        d.add(criarLinha(2, "Brighton", 22, 10, 7, 1, 2, 26, 7, 19));
+        d.add(criarLinha(3, "City", 21, 10, 7, 0, 3, 21, 13, 8));
+        d.add(criarLinha(4, "Liverpool", 18, 10, 5, 3, 2, 14, 10, 4));
+        d.add(criarLinha(5, "Chelsea", 16, 10, 5, 1, 4, 19, 16, 3));
+        d.add(criarLinha(6, "Everton", 16, 10, 4, 4, 2, 12, 10, 2));
+        d.add(criarLinha(7, "Bournemouth", 15, 10, 4, 3, 3, 16, 14, 2));
+        d.add(criarLinha(8, "Brentford", 14, 10, 3, 5, 2, 16, 11, 5));
+        d.add(criarLinha(9, "Leeds", 14, 10, 3, 5, 2, 10, 8, 2));
+        d.add(criarLinha(10, "Aston Villa", 13, 10, 3, 4, 3, 14, 17, -3));
+        d.add(criarLinha(11, "Spurs", 12, 10, 3, 3, 4, 10, 11, -1));
+        d.add(criarLinha(12, "Newcastle", 12, 10, 3, 3, 4, 13, 16, -3));
+        d.add(criarLinha(13, "Hull City", 11, 10, 2, 5, 3, 11, 11, 0));
+        d.add(criarLinha(14, "Ipswich Town", 11, 10, 3, 2, 5, 15, 20, -5));
+        d.add(criarLinha(15, "Fulham", 10, 10, 2, 4, 4, 10, 12, -2));
+        d.add(criarLinha(16, "Nottingham Forest", 9, 10, 2, 3, 5, 9, 13, -4));
+        d.add(criarLinha(17, "Coventry City", 9, 10, 3, 0, 7, 10, 19, -9));
+        d.add(criarLinha(18, "Manchester United", 8, 10, 1, 5, 4, 14, 19, -5));
+        d.add(criarLinha(19, "Sunderland", 8, 10, 2, 2, 6, 8, 17, -9));
+        d.add(criarLinha(20, "Crystal Palace", 7, 10, 2, 1, 7, 10, 24, -14));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosChampionship() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "Birmingham", 29, 15, 8, 5, 2, 28, 14, 14));
+        d.add(criarLinha(2, "Middlesbrough", 29, 15, 8, 5, 2, 30, 19, 11));
+        d.add(criarLinha(3, "Stoke City", 29, 15, 9, 2, 4, 24, 18, 6));
+        d.add(criarLinha(4, "Wolves", 28, 15, 8, 4, 3, 26, 18, 8));
+        d.add(criarLinha(5, "West Bromwich", 28, 15, 8, 4, 3, 23, 15, 8));
+        d.add(criarLinha(6, "Swansea City", 26, 15, 8, 2, 5, 22, 18, 4));
+        d.add(criarLinha(7, "Southampton", 24, 15, 8, 4, 3, 29, 15, 14));
+        d.add(criarLinha(8, "QPR", 24, 15, 6, 6, 3, 24, 18, 6));
+        d.add(criarLinha(9, "West Ham", 23, 15, 6, 5, 4, 37, 23, 14));
+        d.add(criarLinha(10, "Sheffield United", 22, 15, 6, 4, 5, 21, 19, 2));
+        d.add(criarLinha(11, "Portsmouth", 22, 15, 6, 4, 5, 20, 18, 2));
+        d.add(criarLinha(12, "Norwich", 21, 15, 7, 0, 8, 32, 24, 8));
+        d.add(criarLinha(13, "Blackburn Rovers", 21, 15, 6, 3, 6, 22, 23, -1));
+        d.add(criarLinha(14, "Cardiff", 18, 15, 4, 6, 5, 27, 27, 0));
+        d.add(criarLinha(15, "Wrexham", 18, 15, 4, 6, 5, 18, 20, -2));
+        d.add(criarLinha(16, "Millwall", 18, 15, 5, 3, 7, 23, 27, -4));
+        d.add(criarLinha(17, "Bristol City", 18, 15, 5, 3, 7, 16, 24, -8));
+        d.add(criarLinha(18, "Bolton Wanderers", 17, 15, 5, 2, 8, 20, 29, -9));
+        d.add(criarLinha(19, "Charlton", 17, 15, 4, 5, 6, 13, 23, -10));
+        d.add(criarLinha(20, "Watford", 15, 15, 4, 3, 8, 13, 23, -10));
+        d.add(criarLinha(21, "Lincoln City", 15, 15, 4, 3, 8, 15, 26, -11));
+        d.add(criarLinha(22, "Burnley", 10, 15, 1, 7, 7, 22, 31, -9));
+        d.add(criarLinha(23, "Derby County", 10, 15, 2, 4, 9, 14, 30, -16));
+        d.add(criarLinha(24, "Preston", 8, 15, 2, 2, 11, 13, 30, -17));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosLaLiga() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "Barcelona", 33, 12, 11, 0, 1, 48, 13, 35));
+        d.add(criarLinha(2, "Real Madrid", 30, 12, 10, 0, 2, 31, 10, 21));
+        d.add(criarLinha(3, "Atlético Madrid", 28, 12, 9, 1, 2, 23, 10, 13));
+        d.add(criarLinha(4, "Betis", 26, 12, 8, 2, 2, 20, 15, 5));
+        d.add(criarLinha(5, "Real Sociedad", 22, 12, 7, 1, 4, 21, 20, 1));
+        d.add(criarLinha(6, "Sevilla", 18, 12, 5, 3, 4, 17, 19, -2));
+        d.add(criarLinha(7, "Ath. Bilbao", 16, 11, 4, 4, 3, 15, 11, 4));
+        d.add(criarLinha(8, "Villarreal", 15, 12, 4, 3, 5, 17, 15, 2));
+        d.add(criarLinha(9, "La Coruña", 15, 12, 3, 6, 3, 15, 14, 1));
+        d.add(criarLinha(10, "Racing", 14, 12, 4, 2, 6, 17, 30, -13));
+        d.add(criarLinha(11, "Celta de Vigo", 13, 12, 2, 7, 3, 10, 10, 0));
+        d.add(criarLinha(12, "Alavés", 13, 12, 3, 4, 5, 15, 17, -2));
+        d.add(criarLinha(13, "Espanyol", 12, 12, 3, 3, 6, 13, 14, -1));
+        d.add(criarLinha(14, "Rayo Vallecano", 12, 11, 3, 3, 5, 15, 21, -6));
+        d.add(criarLinha(15, "Getafe", 12, 12, 3, 3, 6, 8, 18, -10));
+        d.add(criarLinha(16, "Osasuna", 12, 12, 3, 3, 6, 12, 23, -11));
+        d.add(criarLinha(17, "Levante", 11, 12, 2, 5, 5, 16, 21, -5));
+        d.add(criarLinha(18, "Elche", 10, 12, 2, 4, 6, 14, 20, -6));
+        d.add(criarLinha(19, "Valencia", 9, 12, 2, 3, 7, 8, 20, -12));
+        d.add(criarLinha(20, "Málaga", 5, 12, 0, 5, 7, 9, 23, -14));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosSerieA() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "Lazio", 29, 11, 9, 2, 0, 25, 9, 16));
+        d.add(criarLinha(2, "Inter", 28, 11, 9, 1, 1, 28, 13, 15));
+        d.add(criarLinha(3, "Roma", 27, 11, 8, 3, 0, 31, 10, 21));
+        d.add(criarLinha(4, "Milan", 24, 11, 7, 3, 1, 23, 13, 10));
+        d.add(criarLinha(5, "Como", 23, 11, 7, 2, 2, 18, 10, 8));
+        d.add(criarLinha(6, "Frosinone", 20, 11, 6, 2, 3, 24, 15, 9));
+        d.add(criarLinha(7, "Juventus", 18, 11, 5, 3, 3, 15, 12, 3));
+        d.add(criarLinha(8, "Bologna", 17, 11, 5, 2, 4, 16, 14, 2));
+        d.add(criarLinha(9, "Cagliari", 16, 11, 5, 1, 5, 10, 15, -5));
+        d.add(criarLinha(10, "Napoli", 15, 11, 4, 3, 4, 18, 14, 4));
+        d.add(criarLinha(11, "Torino", 14, 11, 4, 2, 5, 15, 17, -2));
+        d.add(criarLinha(12, "Atalanta", 14, 11, 4, 2, 5, 17, 20, -3));
+        d.add(criarLinha(13, "Genoa", 13, 11, 4, 1, 6, 11, 16, -5));
+        d.add(criarLinha(14, "Lecce", 10, 11, 3, 1, 7, 12, 22, -10));
+        d.add(criarLinha(15, "Fiorentina", 9, 11, 2, 3, 6, 17, 25, -8));
+        d.add(criarLinha(16, "Parma", 8, 11, 2, 2, 7, 9, 17, -8));
+        d.add(criarLinha(17, "Sassuolo", 8, 11, 2, 2, 7, 16, 29, -13));
+        d.add(criarLinha(18, "A.C. Monza", 7, 11, 2, 1, 8, 17, 25, -8));
+        d.add(criarLinha(19, "Venezia", 6, 11, 2, 0, 9, 8, 21, -13));
+        d.add(criarLinha(20, "Udinese", 5, 11, 1, 2, 8, 12, 25, -13));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosBundesliga() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "Bayern", 21, 9, 6, 3, 0, 29, 9, 20));
+        d.add(criarLinha(2, "Borussia", 21, 9, 6, 3, 0, 16, 7, 9));
+        d.add(criarLinha(3, "Freiburg", 19, 9, 6, 1, 2, 20, 10, 10));
+        d.add(criarLinha(4, "RB Leipzig", 18, 9, 6, 0, 3, 27, 13, 14));
+        d.add(criarLinha(5, "Leverkusen", 16, 9, 5, 1, 3, 20, 17, 3));
+        d.add(criarLinha(6, "Werder Bremen", 15, 9, 4, 3, 2, 17, 15, 2));
+        d.add(criarLinha(7, "Elversberg", 13, 9, 4, 1, 4, 17, 18, -1));
+        d.add(criarLinha(8, "VfB Stuttgart", 12, 9, 4, 0, 5, 15, 15, 0));
+        d.add(criarLinha(9, "Hoffenheim", 12, 9, 4, 0, 5, 16, 17, -1));
+        d.add(criarLinha(10, "Eintracht", 12, 9, 3, 3, 3, 15, 20, -5));
+        d.add(criarLinha(11, "Hamburg", 12, 9, 4, 0, 5, 10, 20, -10));
+        d.add(criarLinha(12, "Mainz 05", 10, 9, 3, 1, 5, 18, 19, -1));
+        d.add(criarLinha(13, "Paderborn 07", 10, 9, 2, 4, 3, 8, 11, -3));
+        d.add(criarLinha(14, "Augsburg", 9, 9, 2, 3, 4, 20, 20, 0));
+        d.add(criarLinha(15, "Colônia", 9, 9, 2, 3, 4, 10, 14, -4));
+        d.add(criarLinha(16, "Union Berlin", 7, 9, 1, 4, 4, 7, 21, -14));
+        d.add(criarLinha(17, "Schalke", 6, 9, 1, 3, 5, 5, 11, -6));
+        d.add(criarLinha(18, "Mönchengladbach", 4, 9, 1, 1, 7, 12, 25, -13));
+        return d;
+    }
+
+    private Vector<Vector<Object>> getDadosLigue1() {
+        Vector<Vector<Object>> d = new Vector<>();
+        d.add(criarLinha(1, "PSG", 23, 10, 7, 2, 1, 22, 10, 12));
+        d.add(criarLinha(2, "LOSC", 21, 10, 6, 3, 1, 14, 7, 7));
+        d.add(criarLinha(3, "Paris FC", 20, 10, 6, 2, 2, 17, 10, 7));
+        d.add(criarLinha(4, "Olympique", 18, 10, 6, 0, 4, 22, 14, 8));
+        d.add(criarLinha(5, "Lyon", 17, 10, 5, 2, 3, 15, 9, 6));
+        d.add(criarLinha(6, "Nice", 17, 10, 5, 2, 3, 15, 12, 3));
+        d.add(criarLinha(7, "Mônaco", 16, 10, 4, 4, 2, 13, 11, 2));
+        d.add(criarLinha(8, "Rennes", 16, 10, 5, 1, 4, 21, 21, 0));
+        d.add(criarLinha(9, "Stade Brestois", 15, 10, 4, 3, 3, 18, 12, 6));
+        d.add(criarLinha(10, "Lorient-Bretagne", 15, 10, 4, 3, 3, 9, 8, 1));
+        d.add(criarLinha(11, "Lens", 13, 10, 4, 1, 5, 17, 15, 2));
+        d.add(criarLinha(12, "Toulouse", 13, 10, 3, 4, 3, 15, 14, 1));
+        d.add(criarLinha(13, "RC Strasbourg", 10, 10, 3, 1, 6, 18, 22, -4));
+        d.add(criarLinha(14, "Auxerre", 10, 10, 3, 1, 6, 13, 24, -11));
+        d.add(criarLinha(15, "Le Mans Foot...", 8, 10, 1, 5, 4, 12, 19, -7));
+        d.add(criarLinha(16, "Angers", 8, 10, 2, 2, 6, 9, 19, -10));
+        d.add(criarLinha(17, "Troyes", 8, 10, 2, 2, 6, 7, 17, -10));
+        d.add(criarLinha(18, "Le Havre AC", 2, 10, 0, 2, 8, 9, 22, -13));
         return d;
     }
 
