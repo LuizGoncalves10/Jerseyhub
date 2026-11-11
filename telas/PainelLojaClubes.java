@@ -25,6 +25,7 @@ public class PainelLojaClubes extends JPanel {
     private JPanel painelMenuPrincipal;
     
     private String ligaAtual = "";
+    private String origemCatalogo = "GRID_TIMES";
 
     public PainelLojaClubes(CardLayout layoutMenuPrincipal, JPanel painelMenuPrincipal) {
         this.layoutMenuPrincipal = layoutMenuPrincipal;
@@ -134,13 +135,7 @@ public class PainelLojaClubes extends JPanel {
         topo.setOpaque(false);
         
         JButton btnVoltar = UIUtils.criarBotao("Voltar", Color.decode("#374151"));
-        btnVoltar.addActionListener(e -> {
-            if ("Outros".equals(ligaAtual)) {
-                layoutCards.show(painelCards, "GRID_PAISES");
-            } else {
-                layoutCards.show(painelCards, "GRID_LIGAS");
-            }
-        });
+        btnVoltar.addActionListener(e -> layoutCards.show(painelCards, "GRID_LIGAS"));
         
         lblTituloTimes = new JLabel("Escolha o Time");
         lblTituloTimes.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -177,8 +172,8 @@ public class PainelLojaClubes extends JPanel {
         JPanel topo = new JPanel(new BorderLayout());
         topo.setOpaque(false);
 
-        JButton btnVoltar = UIUtils.criarBotao("Voltar aos Times", Color.decode("#374151"));
-        btnVoltar.addActionListener(e -> layoutCards.show(painelCards, "GRID_TIMES"));
+        JButton btnVoltar = UIUtils.criarBotao("Voltar", Color.decode("#374151"));
+        btnVoltar.addActionListener(e -> layoutCards.show(painelCards, origemCatalogo));
 
         lblTituloTabela = new JLabel("Catálogo");
         lblTituloTabela.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -247,13 +242,17 @@ public class PainelLojaClubes extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if (acao.equals("PAIS")) {
                     if (rotulo.equals("Outros")) {
-                        mostrarTimes("Outros");
+                        origemCatalogo = "GRID_PAISES";
+                        carregarCamisasOutros();
                     } else {
                         mostrarLigas(rotulo);
                     }
                 }
                 else if (acao.equals("LIGA")) mostrarTimes(rotulo);
-                else if (acao.equals("TIME")) carregarCamisas(rotulo);
+                else if (acao.equals("TIME")) {
+                    origemCatalogo = "GRID_TIMES";
+                    carregarCamisas(rotulo);
+                }
                 else if (acao.equals("CAMPEONATO_ATUAL")) layoutCards.show(painelCards, "CAMPEONATO_ATUAL");
             }
         });
@@ -304,23 +303,19 @@ public class PainelLojaClubes extends JPanel {
 
     private void mostrarTimes(String liga) {
         ligaAtual = liga;
-        lblTituloTimes.setText("Outros".equals(liga) ? "Equipes: Outros" : "Equipes: " + liga);
+        lblTituloTimes.setText("Equipes: " + liga);
         painelGridTimes.removeAll();
 
-        if (!"Outros".equals(liga)) {
-            painelGridTimes.add(criarBotaoAvatar("Campeonato Atual", "★", Color.decode("#EAB308"), Color.WHITE, "CAMPEONATO_ATUAL"));
-        }
+        painelGridTimes.add(criarBotaoAvatar("Campeonato Atual", "★", Color.decode("#EAB308"), Color.WHITE, "CAMPEONATO_ATUAL"));
 
         String sql = "";
         
         if (liga.equals("Brasileirão Assaí")) {
             sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos') ORDER BY e.nome";
         } else if (liga.equals("Brasileirão Série B")) {
-            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Sport Recife', 'Nautico') ORDER BY e.nome";
+            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Sport Recife') ORDER BY e.nome";
         } else if (liga.equals("Liga Profesional")) {
             sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Liga Profesional Argentina' ORDER BY e.nome";
-        } else if (liga.equals("Outros")) {
-            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE (c.liga NOT IN ('Campeonato Brasileiro', 'Premier League', 'Championship', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Liga Profesional Argentina', 'MLS', 'Saudi Pro League')) OR (c.liga = 'Campeonato Brasileiro' AND e.nome NOT IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Sport Recife', 'Nautico')) ORDER BY e.nome";
         } else {
             sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = ? ORDER BY e.nome";
         }
@@ -328,7 +323,7 @@ public class PainelLojaClubes extends JPanel {
         try (Connection conexao = ConexaoBanco.conectar();
              PreparedStatement stmt = conexao.prepareStatement(sql)) {
 
-            if (!liga.equals("Brasileirão Assaí") && !liga.equals("Brasileirão Série B") && !liga.equals("Liga Profesional") && !liga.equals("Outros")) {
+            if (!liga.equals("Brasileirão Assaí") && !liga.equals("Brasileirão Série B") && !liga.equals("Liga Profesional")) {
                 stmt.setString(1, liga);
             }
 
@@ -359,6 +354,53 @@ public class PainelLojaClubes extends JPanel {
              PreparedStatement stmt = conexao.prepareStatement(sql)) {
 
             stmt.setString(1, time);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                Vector<String> colunas = new Vector<>();
+                
+                for (int i = 1; i <= columnCount; i++) {
+                    colunas.add(metaData.getColumnLabel(i));
+                }
+
+                Vector<Vector<Object>> dados = new Vector<>();
+                while (rs.next()) {
+                    Vector<Object> linha = new Vector<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        Object valor = rs.getObject(i);
+                        if (metaData.getColumnName(i).equalsIgnoreCase("preco") && valor != null) {
+                            valor = String.format("R$ %.2f", ((Number) valor).doubleValue());
+                        }
+                        linha.add(valor);
+                    }
+                    dados.add(linha);
+                }
+                
+                tabelaCamisas.setModel(UIUtils.criarModeloSomenteLeitura(dados, colunas));
+            }
+
+            layoutCards.show(painelCards, "CATALOGO_CLUBES");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao buscar catálogo: " + ex.getMessage());
+        }
+    }
+
+    private void carregarCamisasOutros() {
+        lblTituloTabela.setText("Catálogo: Outros Clubes");
+        
+        String sql = "SELECT e.nome AS Equipe, c.modelo AS Modelo, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.quantidade_estoque AS Estoque " +
+                     "FROM Camisa c " +
+                     "JOIN Equipe e ON c.fk_id_equipe = e.id_equipe " +
+                     "JOIN Clube cl ON e.id_equipe = cl.fk_id_equipe " +
+                     "WHERE e.equipe_tipo = 1 AND (" +
+                     "cl.liga NOT IN ('Campeonato Brasileiro', 'Premier League', 'Championship', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Liga Profesional Argentina', 'MLS', 'Saudi Pro League') " +
+                     "OR (cl.liga = 'Campeonato Brasileiro' AND e.nome NOT IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Sport Recife'))" +
+                     ") ORDER BY e.nome";
+
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmt = conexao.prepareStatement(sql)) {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 ResultSetMetaData metaData = rs.getMetaData();
