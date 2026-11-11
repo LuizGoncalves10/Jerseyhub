@@ -22,6 +22,7 @@ public class Dashboard extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        painelConteudo.add(new PainelLoja(), "Loja");
         painelConteudo.add(new PainelClientes(), "Clientes");
         painelConteudo.add(new PainelCamisas(), "Camisas");
         painelConteudo.add(new PainelFuncionarios(), "Funcionarios");
@@ -66,6 +67,8 @@ public class Dashboard extends JFrame {
 
         sidebar.add(titulo);
         sidebar.add(subtitulo);
+        sidebar.add(criarItemMenu("Loja", ""));
+        sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Clientes", ""));
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(criarItemMenu("Camisas", ""));
