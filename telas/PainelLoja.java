@@ -23,6 +23,7 @@ public class PainelLoja extends JPanel {
         painelCards.add(criarMenuInicial(), "MENU");
         painelCards.add(criarTelaSelecoes(), "SELECOES");
         painelCards.add(criarTelaCatalogo(), "CATALOGO");
+        painelCards.add(new PainelLojaClubes(layoutCards, painelCards), "CLUBES");
 
         add(UIUtils.criarBarraTopo("Loja Virtual - Catálogo Interativo"), BorderLayout.NORTH);
         add(painelCards, BorderLayout.CENTER);
@@ -57,7 +58,7 @@ public class PainelLoja extends JPanel {
         cartaoClubes.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                JOptionPane.showMessageDialog(PainelLoja.this, "Em breve: Catálogo de Clubes");
+                layoutCards.show(painelCards, "CLUBES");
             }
         });
 
