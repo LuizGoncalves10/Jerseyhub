@@ -573,3 +573,75 @@ UNION ALL
 SELECT 'Item_Pedido', COUNT(*) FROM Item_Pedido
 UNION ALL
 SELECT 'Personalizacao', COUNT(*) FROM Personalizacao;
+
+DROP TRIGGER IF EXISTS trg_log_alteracao_camisa;
+DROP TRIGGER IF EXISTS trg_baixa_estoque_item;
+DROP TRIGGER IF EXISTS trg_devolve_estoque_item;
+DROP TRIGGER IF EXISTS trg_devolve_estoque_pedido;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_log_alteracao_camisa
+AFTER UPDATE ON Camisa
+FOR EACH ROW
+BEGIN
+    IF NEW.preco <> OLD.preco THEN
+        INSERT INTO Log_Camisa (id_camisa, campo, valor_antigo, valor_novo, usuario)
+        VALUES (NEW.id_camisa, 'preco', OLD.preco, NEW.preco, USER());
+    END IF;
+
+    IF NEW.quantidade_estoque <> OLD.quantidade_estoque THEN
+        INSERT INTO Log_Camisa (id_camisa, campo, valor_antigo, valor_novo, usuario)
+        VALUES (NEW.id_camisa, 'quantidade_estoque', OLD.quantidade_estoque, NEW.quantidade_estoque, USER());
+    END IF;
+END$$
+
+CREATE TRIGGER trg_baixa_estoque_item
+BEFORE INSERT ON Item_Pedido
+FOR EACH ROW
+BEGIN
+    DECLARE v_estoque INT;
+    DECLARE v_mensagem VARCHAR(255);
+
+    SELECT quantidade_estoque INTO v_estoque
+    FROM Camisa
+    WHERE id_camisa = NEW.fk_id_camisa
+    FOR UPDATE;
+
+    IF v_estoque IS NOT NULL THEN
+        IF v_estoque < NEW.quantidade THEN
+            SET v_mensagem = CONCAT('Estoque insuficiente para a camisa ', NEW.fk_id_camisa,
+                                    ': disponivel ', v_estoque, ', solicitado ', NEW.quantidade, '.');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_mensagem;
+        END IF;
+
+        UPDATE Camisa
+        SET quantidade_estoque = quantidade_estoque - NEW.quantidade
+        WHERE id_camisa = NEW.fk_id_camisa;
+    END IF;
+END$$
+
+CREATE TRIGGER trg_devolve_estoque_item
+AFTER DELETE ON Item_Pedido
+FOR EACH ROW
+BEGIN
+    UPDATE Camisa
+    SET quantidade_estoque = quantidade_estoque + OLD.quantidade
+    WHERE id_camisa = OLD.fk_id_camisa;
+END$$
+
+CREATE TRIGGER trg_devolve_estoque_pedido
+BEFORE DELETE ON Pedido
+FOR EACH ROW
+BEGIN
+    UPDATE Camisa c
+    JOIN (
+        SELECT fk_id_camisa, SUM(quantidade) AS quantidade
+        FROM Item_Pedido
+        WHERE fk_id_pedido = OLD.id_pedido
+        GROUP BY fk_id_camisa
+    ) itens ON itens.fk_id_camisa = c.id_camisa
+    SET c.quantidade_estoque = c.quantidade_estoque + itens.quantidade;
+END$$
+
+DELIMITER ;

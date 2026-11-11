@@ -220,3 +220,193 @@ JOIN Pedido p ON f.id_funcionario = p.fk_id_funcionario
 JOIN Item_Pedido ip ON p.id_pedido = ip.fk_id_pedido
 JOIN Cliente cl ON p.fk_id_cliente = cl.id_cliente
 GROUP BY f.id_funcionario, f.nome, f.cargo;
+
+CREATE TABLE IF NOT EXISTS Log_Camisa (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    id_camisa INT NOT NULL,
+    campo VARCHAR(30) NOT NULL,
+    valor_antigo DECIMAL(10,2) NOT NULL,
+    valor_novo DECIMAL(10,2) NOT NULL,
+    usuario VARCHAR(100) NOT NULL,
+    data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_log_camisa_campo
+        CHECK (campo IN ('preco', 'quantidade_estoque'))
+);
+
+DROP FUNCTION IF EXISTS fn_classificar_cliente;
+DROP FUNCTION IF EXISTS fn_total_vendido_camisa;
+
+DELIMITER $$
+
+CREATE FUNCTION fn_classificar_cliente(p_id_cliente INT)
+RETURNS VARCHAR(20)
+READS SQL DATA
+BEGIN
+    DECLARE v_total_gasto DECIMAL(12,2);
+
+    IF NOT EXISTS (SELECT 1 FROM Cliente WHERE id_cliente = p_id_cliente) THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT SUM(valor_total) INTO v_total_gasto
+    FROM Pedido
+    WHERE fk_id_cliente = p_id_cliente;
+
+    IF v_total_gasto IS NULL THEN
+        RETURN 'Sem compras';
+    ELSEIF v_total_gasto >= 900 THEN
+        RETURN 'Ouro';
+    ELSEIF v_total_gasto >= 500 THEN
+        RETURN 'Prata';
+    ELSE
+        RETURN 'Bronze';
+    END IF;
+END$$
+
+CREATE FUNCTION fn_total_vendido_camisa(p_id_camisa INT)
+RETURNS INT
+READS SQL DATA
+BEGIN
+    DECLARE v_total_vendido INT;
+
+    SELECT COALESCE(SUM(quantidade), 0) INTO v_total_vendido
+    FROM Item_Pedido
+    WHERE fk_id_camisa = p_id_camisa;
+
+    RETURN v_total_vendido;
+END$$
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_reajustar_precos_equipe;
+DROP PROCEDURE IF EXISTS sp_distribuir_remessa;
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_reajustar_precos_equipe(
+    IN p_id_equipe INT,
+    IN p_percentual DECIMAL(5,2)
+)
+BEGIN
+    IF p_percentual IS NULL OR p_percentual = 0 OR p_percentual <= -100 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Percentual invalido: informe um valor diferente de zero e maior que -100.';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM Equipe WHERE id_equipe = p_id_equipe) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Equipe nao encontrada.';
+    END IF;
+
+    UPDATE Camisa
+    SET preco = ROUND(preco * (1 + p_percentual / 100), 2)
+    WHERE fk_id_equipe = p_id_equipe;
+
+    SELECT ROW_COUNT() AS Camisas_Reajustadas;
+END$$
+
+CREATE PROCEDURE sp_distribuir_remessa(
+    IN p_pecas INT,
+    IN p_estoque_minimo INT,
+    OUT p_pecas_restantes INT
+)
+BEGIN
+    DECLARE v_fim BOOLEAN DEFAULT FALSE;
+    DECLARE v_ordem INT DEFAULT 0;
+    DECLARE v_id_camisa INT;
+    DECLARE v_estoque INT;
+    DECLARE v_total_vendido INT;
+    DECLARE v_necessidade INT;
+    DECLARE v_restante INT;
+
+    DECLARE cur_camisas CURSOR FOR
+        SELECT id_camisa,
+               quantidade_estoque,
+               fn_total_vendido_camisa(id_camisa) AS total_vendido
+        FROM Camisa
+        WHERE quantidade_estoque < p_estoque_minimo
+        ORDER BY total_vendido DESC, quantidade_estoque ASC, id_camisa ASC;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_fim = TRUE;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF p_pecas IS NULL OR p_pecas <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Remessa invalida: informe uma quantidade de pecas maior que zero.';
+    END IF;
+
+    IF p_estoque_minimo IS NULL OR p_estoque_minimo <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Estoque minimo invalido: informe um valor maior que zero.';
+    END IF;
+
+    DROP TEMPORARY TABLE IF EXISTS tmp_resultado_remessa;
+    CREATE TEMPORARY TABLE tmp_resultado_remessa (
+        ordem INT PRIMARY KEY,
+        id_camisa INT NOT NULL,
+        total_vendido INT NOT NULL,
+        estoque_antes INT NOT NULL,
+        necessidade INT NOT NULL,
+        situacao VARCHAR(30) NOT NULL,
+        saldo_remessa INT NOT NULL
+    );
+
+    SET v_restante = p_pecas;
+
+    START TRANSACTION;
+
+    OPEN cur_camisas;
+
+    percorrer: LOOP
+        FETCH cur_camisas INTO v_id_camisa, v_estoque, v_total_vendido;
+        IF v_fim THEN
+            LEAVE percorrer;
+        END IF;
+
+        SET v_ordem = v_ordem + 1;
+        SET v_necessidade = p_estoque_minimo - v_estoque;
+
+        IF v_necessidade <= v_restante THEN
+            UPDATE Camisa
+            SET quantidade_estoque = quantidade_estoque + v_necessidade
+            WHERE id_camisa = v_id_camisa;
+
+            SET v_restante = v_restante - v_necessidade;
+
+            INSERT INTO tmp_resultado_remessa
+            VALUES (v_ordem, v_id_camisa, v_total_vendido, v_estoque, v_necessidade, 'Reposta', v_restante);
+        ELSE
+            INSERT INTO tmp_resultado_remessa
+            VALUES (v_ordem, v_id_camisa, v_total_vendido, v_estoque, v_necessidade, 'Ignorada (saldo insuficiente)', v_restante);
+        END IF;
+    END LOOP;
+
+    CLOSE cur_camisas;
+
+    COMMIT;
+
+    SET p_pecas_restantes = v_restante;
+
+    SELECT r.ordem AS Ordem,
+           COALESCE(e.nome, 'Sem Equipe') AS Equipe,
+           c.modelo AS Modelo,
+           c.versao AS Versao,
+           c.tamanho AS Tamanho,
+           r.total_vendido AS Total_Vendido,
+           r.estoque_antes AS Estoque_Antes,
+           r.necessidade AS Necessidade,
+           r.situacao AS Situacao,
+           r.saldo_remessa AS Saldo_Remessa
+    FROM tmp_resultado_remessa r
+    JOIN Camisa c ON c.id_camisa = r.id_camisa
+    LEFT JOIN Equipe e ON e.id_equipe = c.fk_id_equipe
+    ORDER BY r.ordem;
+END$$
+
+DELIMITER ;
