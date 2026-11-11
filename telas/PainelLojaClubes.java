@@ -26,6 +26,8 @@ public class PainelLojaClubes extends JPanel {
     
     private String ligaAtual = "";
     private String origemCatalogo = "GRID_TIMES";
+    
+    private PainelCampeonatoAtual painelCampeonatoAtual;
 
     public PainelLojaClubes(CardLayout layoutMenuPrincipal, JPanel painelMenuPrincipal) {
         this.layoutMenuPrincipal = layoutMenuPrincipal;
@@ -34,12 +36,14 @@ public class PainelLojaClubes extends JPanel {
         setOpaque(false);
         setLayout(new BorderLayout());
 
+        painelCampeonatoAtual = new PainelCampeonatoAtual(layoutCards, painelCards);
+
         painelCards.setOpaque(false);
         painelCards.add(criarTelaPaises(), "GRID_PAISES");
         painelCards.add(criarTelaLigas(), "GRID_LIGAS");
         painelCards.add(criarTelaTimes(), "GRID_TIMES");
         painelCards.add(criarTelaCatalogo(), "CATALOGO_CLUBES");
-        painelCards.add(new PainelCampeonatoAtual(layoutCards, painelCards), "CAMPEONATO_ATUAL");
+        painelCards.add(painelCampeonatoAtual, "CAMPEONATO_ATUAL");
 
         add(painelCards, BorderLayout.CENTER);
     }
@@ -135,7 +139,13 @@ public class PainelLojaClubes extends JPanel {
         topo.setOpaque(false);
         
         JButton btnVoltar = UIUtils.criarBotao("Voltar", Color.decode("#374151"));
-        btnVoltar.addActionListener(e -> layoutCards.show(painelCards, "GRID_LIGAS"));
+        btnVoltar.addActionListener(e -> {
+            if ("Outros".equals(ligaAtual)) {
+                layoutCards.show(painelCards, "GRID_PAISES");
+            } else {
+                layoutCards.show(painelCards, "GRID_LIGAS");
+            }
+        });
         
         lblTituloTimes = new JLabel("Escolha o Time");
         lblTituloTimes.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -253,7 +263,10 @@ public class PainelLojaClubes extends JPanel {
                     origemCatalogo = "GRID_TIMES";
                     carregarCamisas(rotulo);
                 }
-                else if (acao.equals("CAMPEONATO_ATUAL")) layoutCards.show(painelCards, "CAMPEONATO_ATUAL");
+                else if (acao.equals("CAMPEONATO_ATUAL")) {
+                    painelCampeonatoAtual.carregarCampeonato(ligaAtual);
+                    layoutCards.show(painelCards, "CAMPEONATO_ATUAL");
+                }
             }
         });
 
@@ -313,7 +326,7 @@ public class PainelLojaClubes extends JPanel {
         if (liga.equals("Brasileirão Assaí")) {
             sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos') ORDER BY e.nome";
         } else if (liga.equals("Brasileirão Série B")) {
-            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Sport Recife') ORDER BY e.nome";
+            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Sport Recife', 'Nautico') ORDER BY e.nome";
         } else if (liga.equals("Liga Profesional")) {
             sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Liga Profesional Argentina' ORDER BY e.nome";
         } else {
@@ -396,7 +409,7 @@ public class PainelLojaClubes extends JPanel {
                      "JOIN Clube cl ON e.id_equipe = cl.fk_id_equipe " +
                      "WHERE e.equipe_tipo = 1 AND (" +
                      "cl.liga NOT IN ('Campeonato Brasileiro', 'Premier League', 'Championship', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Liga Profesional Argentina', 'MLS', 'Saudi Pro League') " +
-                     "OR (cl.liga = 'Campeonato Brasileiro' AND e.nome NOT IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Sport Recife'))" +
+                     "OR (cl.liga = 'Campeonato Brasileiro' AND e.nome NOT IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Sport Recife', 'Nautico'))" +
                      ") ORDER BY e.nome";
 
         try (Connection conexao = ConexaoBanco.conectar();
