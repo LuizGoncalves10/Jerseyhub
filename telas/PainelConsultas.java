@@ -5,12 +5,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
 import java.util.Vector;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 public class PainelConsultas extends JPanel {
     private JComboBox<String> comboConsultas;
     private JTable tabelaResultados;
     private JLabel lblDescricaoConsulta;
     private JLabel lblTotalRegistros;
+    private JTextField campoFiltro;
+    private TableRowSorter<TableModel> ordenador;
 
     public PainelConsultas() {
         UIUtils.configurarPainelBase(this);
@@ -20,10 +24,14 @@ public class PainelConsultas extends JPanel {
             "Estoque", "Clientes Frequentes", "Camisas Sem Venda",
             "Ticket Medio", "Camisa Mais Cara", "Clientes Sem Compras",
             "Funcionarios Sem Vendas", "Historico Completo", 
-            "Supervisores Ativos", "Maior Venda"
+            "Supervisores Ativos", "Maior Venda",
+            "View Faturamento", "View Vendedores"
         };
         comboConsultas = new JComboBox<>(opcoes);
         comboConsultas.setPreferredSize(new Dimension(220, 32));
+        campoFiltro = UIUtils.criarCampoBusca("Filtrar resultado...");
+        campoFiltro.setPreferredSize(new Dimension(200, 32));
+        UIUtils.executarAoDigitar(campoFiltro, this::filtrarResultados);
         JButton btnRodarConsulta = UIUtils.criarBotao("Executar", UIUtils.COR_SUCESSO);
 
         btnRodarConsulta.addActionListener(e -> executarConsulta());
@@ -33,6 +41,7 @@ public class PainelConsultas extends JPanel {
         menuConsultas.setOpaque(false);
         menuConsultas.add(new JLabel("Visualizacao:"));
         menuConsultas.add(comboConsultas);
+        menuConsultas.add(campoFiltro);
         menuConsultas.add(btnRodarConsulta);
 
         JPanel linhaConsultas = new JPanel(new BorderLayout());
@@ -93,6 +102,10 @@ public class PainelConsultas extends JPanel {
             descricao = "Subconsulta (IN): lista os funcionários que ocupam posições de supervisão.";
         } else if ("Maior Venda".equals(selecao)) {
             descricao = "Subconsulta (MAX): exibe o vendedor responsável pelo pedido de maior valor transacionado.";
+        } else if ("View Faturamento".equals(selecao)) {
+            descricao = "View (vw_faturamento_por_equipe) com 3 JOINs: camisas vendidas e faturamento total de cada equipe.";
+        } else if ("View Vendedores".equals(selecao)) {
+            descricao = "View (vw_desempenho_vendedores) com 3 JOINs: pedidos, clientes atendidos e valor total vendido por vendedor.";
         } else {
             descricao = "Selecione uma consulta e clique em Executar.";
         }
@@ -130,6 +143,10 @@ public class PainelConsultas extends JPanel {
             sql = "SELECT f.nome AS Funcionario, f.cargo AS Cargo FROM Funcionario f WHERE f.id_funcionario IN (SELECT fk_id_supervisor FROM Supervisao)";
         } else if ("Maior Venda".equals(selecao)) {
             sql = "SELECT f.nome AS Vendedor, p.id_pedido AS Pedido, p.valor_total AS Total_Venda FROM Pedido p JOIN Funcionario f ON p.fk_id_funcionario = f.id_funcionario WHERE p.valor_total = (SELECT MAX(valor_total) FROM Pedido)";
+        } else if ("View Faturamento".equals(selecao)) {
+            sql = "SELECT * FROM vw_faturamento_por_equipe";
+        } else if ("View Vendedores".equals(selecao)) {
+            sql = "SELECT * FROM vw_desempenho_vendedores";
         } else {
             JOptionPane.showMessageDialog(this, "Selecione uma consulta válida.");
             return;
@@ -157,10 +174,20 @@ public class PainelConsultas extends JPanel {
             }
 
             tabelaResultados.setModel(UIUtils.criarModeloSomenteLeitura(dados, colunas));
-            lblTotalRegistros.setText(dados.size() + " registro(s) encontrado(s)");
+            campoFiltro.setText("");
+            ordenador = new TableRowSorter<>(tabelaResultados.getModel());
+            tabelaResultados.setRowSorter(ordenador);
+            filtrarResultados();
 
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao executar consulta: " + ex.getMessage());
         }
+    }
+
+    private void filtrarResultados() {
+        if (ordenador == null) return;
+        String termo = campoFiltro.getText().trim();
+        ordenador.setRowFilter(termo.isEmpty() ? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(termo)));
+        lblTotalRegistros.setText(tabelaResultados.getRowCount() + " registro(s) encontrado(s)");
     }
 }
