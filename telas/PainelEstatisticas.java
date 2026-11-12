@@ -54,7 +54,7 @@ public class PainelEstatisticas extends JPanel {
     private LineChartPanel graficoSemanas;
     private BarChartPanel graficoFaturamento;
     private BarChartPanel graficoVendedores;
-    private BarChartPanel graficoTopCamisas;
+    private BarChartPanel graficoTamanhos;
 
     public PainelEstatisticas() {
         UIUtils.configurarPainelBase(this);
@@ -112,7 +112,7 @@ public class PainelEstatisticas extends JPanel {
         graficoSemanas = new LineChartPanel();
         graficoFaturamento = new BarChartPanel(true, 140);
         graficoVendedores = new BarChartPanel(true, 140);
-        graficoTopCamisas = new BarChartPanel(false, 280);
+        graficoTamanhos = new BarChartPanel(false, 140);
 
         painelConteudo.add(criarBarraFiltros());
         painelConteudo.add(Box.createRigidArea(new Dimension(0, 16)));
@@ -135,9 +135,9 @@ public class PainelEstatisticas extends JPanel {
             criarCartao("Top 5: Desempenho de Vendedores (todo o período)", graficoVendedores, false), 320));
         painelConteudo.add(Box.createRigidArea(new Dimension(0, 16)));
 
-        JPanel cartaoTopCamisas = criarCartao("Top 5: Camisas Mais Vendidas no Período (peças)", graficoTopCamisas, false);
-        cartaoTopCamisas.setMaximumSize(new Dimension(Integer.MAX_VALUE, 320));
-        painelConteudo.add(cartaoTopCamisas);
+        JPanel cartaoTamanhos = criarCartao("Peças Vendidas por Tamanho no Período", graficoTamanhos, false);
+        cartaoTamanhos.setMaximumSize(new Dimension(Integer.MAX_VALUE, 320));
+        painelConteudo.add(cartaoTamanhos);
         painelConteudo.add(Box.createVerticalGlue());
 
         JScrollPane rolagem = UIUtils.criarRolagem(painelConteudo);
@@ -477,20 +477,20 @@ public class PainelEstatisticas extends JPanel {
         }
         graficoSemanas.setDados(semanas, faturamentoSemanas);
 
-        List<String> camisas = new ArrayList<>();
+        List<String> tamanhos = new ArrayList<>();
         List<Double> pecasVendidas = new ArrayList<>();
-        String sqlTopCamisas = "SELECT CONCAT(COALESCE(e.nome, 'Sem Equipe'), ' ', c.modelo, ' ', c.tamanho) AS camisa, SUM(ip.quantidade) AS pecas " +
-                               JUNCOES_VENDAS + "GROUP BY c.id_camisa, e.nome, c.modelo, c.tamanho ORDER BY pecas DESC LIMIT 5";
-        try (PreparedStatement stmt = conexao.prepareStatement(sqlTopCamisas)) {
+        String sqlTamanhos = "SELECT CONCAT('Tamanho ', c.tamanho) AS tamanho, SUM(ip.quantidade) AS pecas " +
+                             JUNCOES_VENDAS + "GROUP BY c.tamanho ORDER BY pecas DESC";
+        try (PreparedStatement stmt = conexao.prepareStatement(sqlTamanhos)) {
             definirFiltrosVendas(stmt, inicio, fim, tipo);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    camisas.add(rs.getString("camisa"));
+                    tamanhos.add(rs.getString("tamanho"));
                     pecasVendidas.add(rs.getDouble("pecas"));
                 }
             }
         }
-        graficoTopCamisas.setDados(camisas, pecasVendidas);
+        graficoTamanhos.setDados(tamanhos, pecasVendidas);
     }
 
     private void carregarGraficosDasViews(Connection conexao, int tipo) throws SQLException {
