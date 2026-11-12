@@ -14,7 +14,7 @@ public class PainelCamisas extends JPanel {
     private JTable tabelaCamisas;
     private JTextField campoBusca;
     private JLabel lblTotalCamisas;
-    private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.modelo LIKE ? OR COALESCE(e.nome, 'Sem Equipe') LIKE ? ORDER BY c.id_camisa";
+    private static final String SQL_LISTA_CAMISAS = "SELECT c.id_camisa AS ID, c.modelo AS Modelo, COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.versao AS Versao, c.tamanho AS Tamanho, c.preco AS Preco, c.ano AS Ano, c.quantidade_estoque AS Estoque, fn_total_vendido_camisa(c.id_camisa) AS Total_Vendido FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.modelo LIKE ? OR COALESCE(e.nome, 'Sem Equipe') LIKE ? ORDER BY c.id_camisa";
 
     public PainelCamisas() {
         UIUtils.configurarPainelBase(this);
@@ -22,10 +22,16 @@ public class PainelCamisas extends JPanel {
         JButton btnInserirCamisa = UIUtils.criarBotao("Inserir", UIUtils.COR_SUCESSO);
         JButton btnEditarCamisa = UIUtils.criarBotao("Editar", UIUtils.COR_EDICAO);
         JButton btnExcluirCamisa = UIUtils.criarBotao("Excluir", UIUtils.COR_PERIGO);
+        JButton btnReajustar = UIUtils.criarBotao("Reajustar", UIUtils.COR_NEUTRA);
+        JButton btnRemessa = UIUtils.criarBotao("Remessa", UIUtils.COR_NEUTRA);
+        JButton btnHistorico = UIUtils.criarBotao("Histórico", UIUtils.COR_NEUTRA);
 
         btnInserirCamisa.addActionListener(e -> inserirCamisa());
         btnEditarCamisa.addActionListener(e -> editarCamisa());
         btnExcluirCamisa.addActionListener(e -> excluirCamisa());
+        btnReajustar.addActionListener(e -> reajustarPrecosEquipe());
+        btnRemessa.addActionListener(e -> distribuirRemessa());
+        btnHistorico.addActionListener(e -> mostrarHistoricoCamisas());
 
         campoBusca = UIUtils.criarCampoBusca("Buscar por modelo ou equipe...");
         UIUtils.executarAoDigitar(campoBusca, this::atualizarListaCamisas);
@@ -65,7 +71,7 @@ public class PainelCamisas extends JPanel {
             }
         });
 
-        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", campoBusca, btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa), BorderLayout.NORTH);
+        add(UIUtils.criarBarraTopo("Gerenciamento de Camisas", campoBusca, btnInserirCamisa, btnEditarCamisa, btnExcluirCamisa, btnReajustar, btnRemessa, btnHistorico), BorderLayout.NORTH);
         add(scrollPaneTabela, BorderLayout.CENTER);
         add(lblTotalCamisas, BorderLayout.SOUTH);
 
@@ -321,5 +327,117 @@ public class PainelCamisas extends JPanel {
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao excluir: " + ex.getMessage());
         }
+    }
+
+    private void reajustarPrecosEquipe() {
+        JTextField txtIdEquipe = new JTextField();
+        JTextField txtPercentual = new JTextField();
+
+        JPanel painelForm = new JPanel(new GridLayout(2, 2, 10, 10));
+        painelForm.add(new JLabel("ID da Equipe:"));
+        painelForm.add(txtIdEquipe);
+        painelForm.add(new JLabel("Percentual (%):"));
+        painelForm.add(txtPercentual);
+
+        int resultado = JOptionPane.showConfirmDialog(this, painelForm, "Reajustar Preços da Equipe",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (resultado != JOptionPane.OK_OPTION) return;
+
+        try (Connection conexao = ConexaoBanco.conectar();
+             CallableStatement stmt = conexao.prepareCall("{CALL sp_reajustar_precos_equipe(?, ?)}")) {
+            stmt.setInt(1, Integer.parseInt(txtIdEquipe.getText().trim()));
+            stmt.setBigDecimal(2, new java.math.BigDecimal(txtPercentual.getText().trim().replace(",", ".")));
+
+            int camisasReajustadas = 0;
+            if (stmt.execute()) {
+                try (ResultSet rs = stmt.getResultSet()) {
+                    if (rs.next()) camisasReajustadas = rs.getInt("Camisas_Reajustadas");
+                }
+            }
+            JOptionPane.showMessageDialog(this, camisasReajustadas + " camisa(s) reajustada(s). As mudanças foram registradas no Histórico.");
+            atualizarListaCamisas();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Erro: informe apenas números válidos para a equipe e o percentual.");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao reajustar: " + ex.getMessage());
+        }
+    }
+
+    private void distribuirRemessa() {
+        JTextField txtPecas = new JTextField();
+        JTextField txtEstoqueMinimo = new JTextField();
+
+        JPanel painelForm = new JPanel(new GridLayout(2, 2, 10, 10));
+        painelForm.add(new JLabel("Peças da remessa:"));
+        painelForm.add(txtPecas);
+        painelForm.add(new JLabel("Estoque mínimo:"));
+        painelForm.add(txtEstoqueMinimo);
+
+        int resultado = JOptionPane.showConfirmDialog(this, painelForm, "Distribuir Remessa",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (resultado != JOptionPane.OK_OPTION) return;
+
+        try (Connection conexao = ConexaoBanco.conectar();
+             CallableStatement stmt = conexao.prepareCall("{CALL sp_distribuir_remessa(?, ?, ?)}")) {
+            stmt.setInt(1, Integer.parseInt(txtPecas.getText().trim()));
+            stmt.setInt(2, Integer.parseInt(txtEstoqueMinimo.getText().trim()));
+            stmt.registerOutParameter(3, Types.INTEGER);
+
+            JTable tabelaResultado = UIUtils.criarTabela();
+            if (stmt.execute()) {
+                try (ResultSet rs = stmt.getResultSet()) {
+                    tabelaResultado = criarTabelaDoResultado(rs);
+                }
+            }
+            int pecasRestantes = stmt.getInt(3);
+
+            mostrarTabela("Resultado da Remessa", "Peças restantes da remessa: " + pecasRestantes, tabelaResultado);
+            atualizarListaCamisas();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Erro: informe apenas números inteiros para as peças e o estoque mínimo.");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao distribuir remessa: " + ex.getMessage());
+        }
+    }
+
+    private void mostrarHistoricoCamisas() {
+        try (Connection conexao = ConexaoBanco.conectar();
+             PreparedStatement stmt = conexao.prepareStatement("SELECT * FROM Log_Camisa ORDER BY id_log DESC");
+             ResultSet rs = stmt.executeQuery()) {
+            JTable tabelaLog = criarTabelaDoResultado(rs);
+            mostrarTabela("Histórico de Alterações de Camisas", tabelaLog.getRowCount() + " alteração(ões) registrada(s) pelo trigger", tabelaLog);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar histórico: " + ex.getMessage());
+        }
+    }
+
+    private JTable criarTabelaDoResultado(ResultSet rs) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        Vector<String> colunas = new Vector<>();
+        for (int i = 1; i <= columnCount; i++) {
+            colunas.add(metaData.getColumnLabel(i));
+        }
+
+        Vector<Vector<Object>> dados = new Vector<>();
+        while (rs.next()) {
+            Vector<Object> linha = new Vector<>();
+            for (int i = 1; i <= columnCount; i++) {
+                linha.add(rs.getObject(i));
+            }
+            dados.add(linha);
+        }
+
+        JTable tabela = UIUtils.criarTabela();
+        tabela.setModel(UIUtils.criarModeloSomenteLeitura(dados, colunas));
+        return tabela;
+    }
+
+    private void mostrarTabela(String titulo, String resumo, JTable tabela) {
+        JPanel painel = new JPanel(new BorderLayout(0, 10));
+        painel.add(new JLabel(resumo), BorderLayout.NORTH);
+        painel.add(UIUtils.criarRolagem(tabela), BorderLayout.CENTER);
+        painel.setPreferredSize(new Dimension(850, 320));
+        JOptionPane.showMessageDialog(this, painel, titulo, JOptionPane.PLAIN_MESSAGE);
     }
 }
