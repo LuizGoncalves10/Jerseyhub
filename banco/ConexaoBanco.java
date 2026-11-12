@@ -11,7 +11,7 @@ public class ConexaoBanco {
         try {
             String url = "jdbc:mysql://localhost:3306/jerseyhub";
             String usuario = "root";
-            String senha = "luiz1323"; 
+            String senha = "sua_senha"; 
 
             conexao = DriverManager.getConnection(url, usuario, senha);
         } catch (SQLException e) {
