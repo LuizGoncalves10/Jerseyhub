@@ -14,7 +14,7 @@ public class PainelClientes extends JPanel {
     private JTable tabelaClientes;
     private JTextField campoBusca;
     private JLabel lblTotalClientes;
-    private static final String SQL_LISTA_CLIENTES = "SELECT id_cliente AS ID, nome AS Nome, cpf AS CPF, rua AS Rua, numero AS Numero, bairro AS Bairro, cep AS CEP FROM Cliente WHERE nome LIKE ? OR cpf LIKE ? ORDER BY nome";
+    private static final String SQL_LISTA_CLIENTES = "SELECT id_cliente AS ID, nome AS Nome, cpf AS CPF, rua AS Rua, numero AS Numero, bairro AS Bairro, cep AS CEP, fn_classificar_cliente(id_cliente) AS Categoria FROM Cliente WHERE nome LIKE ? OR cpf LIKE ? ORDER BY nome";
 
     public PainelClientes() {
         UIUtils.configurarPainelBase(this);
