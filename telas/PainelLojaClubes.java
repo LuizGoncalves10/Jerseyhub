@@ -324,9 +324,9 @@ public class PainelLojaClubes extends JPanel {
         String sql = "";
         
         if (liga.equals("Brasileirão Assaí")) {
-            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos') ORDER BY e.nome";
+            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Atletico-GO') ORDER BY e.nome";
         } else if (liga.equals("Brasileirão Série B")) {
-            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Sport Recife', 'Nautico') ORDER BY e.nome";
+            sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Campeonato Brasileiro' AND e.nome IN ('Sport Recife', 'Nautico', 'Ceara', 'Novorizontino', 'Vila Nova', 'Juventude') ORDER BY e.nome";
         } else if (liga.equals("Liga Profesional")) {
             sql = "SELECT e.nome FROM Equipe e JOIN Clube c ON e.id_equipe = c.fk_id_equipe WHERE c.liga = 'Liga Profesional Argentina' ORDER BY e.nome";
         } else {
@@ -409,7 +409,7 @@ public class PainelLojaClubes extends JPanel {
                      "JOIN Clube cl ON e.id_equipe = cl.fk_id_equipe " +
                      "WHERE e.equipe_tipo = 1 AND (" +
                      "cl.liga NOT IN ('Campeonato Brasileiro', 'Premier League', 'Championship', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Liga Profesional Argentina', 'MLS', 'Saudi Pro League') " +
-                     "OR (cl.liga = 'Campeonato Brasileiro' AND e.nome NOT IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Sport Recife', 'Nautico'))" +
+                     "OR (cl.liga = 'Campeonato Brasileiro' AND e.nome NOT IN ('Flamengo', 'Palmeiras', 'Sao Paulo', 'Corinthians', 'Gremio', 'Internacional', 'Vasco da Gama', 'Fluminense', 'Cruzeiro', 'Atletico Mineiro', 'Bahia', 'Vitoria', 'Santos', 'Atletico-GO', 'Sport Recife', 'Nautico', 'Ceara', 'Novorizontino', 'Vila Nova', 'Juventude'))" +
                      ") ORDER BY e.nome";
 
         try (Connection conexao = ConexaoBanco.conectar();

@@ -1,0 +1,211 @@
+USE jerseyhub;
+
+INSERT INTO Equipe (id_equipe, nome, equipe_tipo, ano_fundacao) VALUES
+(201, 'Novorizontino', 1, 2010), (202, 'Juventude', 1, 1913), (203, 'Vila Nova', 1, 1943),
+(204, 'Nautico', 1, 1901), (205, 'Ceara', 1, 1914), (206, 'Atletico-GO', 1, 1937),
+(207, 'Manchester City', 1, 1880), (208, 'Birmingham', 1, 1875), (209, 'Middlesbrough', 1, 1876),
+(210, 'Stoke City', 1, 1863), (211, 'Betis', 1, 1907), (212, 'Real Sociedad', 1, 1909),
+(213, 'Roma', 1, 1927), (214, 'Olympique de Marseille', 1, 1899), (215, 'Inter Miami', 1, 2018),
+(216, 'LA Galaxy', 1, 1994), (217, 'LAFC', 1, 2014), (218, 'Nashville SC', 1, 2017),
+(219, 'Al-Hilal', 1, 1957), (220, 'Al-Nassr', 1, 1955), (221, 'Al-Ittihad', 1, 1927),
+(222, 'Al-Ahli Saudi', 1, 1937), (223, 'Ajax', 1, 1900), (224, 'Benfica', 1, 1904),
+(225, 'Porto', 1, 1893), (226, 'Galatasaray', 1, 1905);
+
+INSERT INTO Clube (fk_id_equipe, liga, estadio) VALUES
+(201, 'Campeonato Brasileiro', 'Jorge Ismael de Biasi'), (202, 'Campeonato Brasileiro', 'Alfredo Jaconi'),
+(203, 'Campeonato Brasileiro', 'OBA'), (204, 'Campeonato Brasileiro', 'Aflitos'),
+(205, 'Campeonato Brasileiro', 'Castelao'), (206, 'Campeonato Brasileiro', 'Antonio Accioly'),
+(207, 'Premier League', 'Etihad Stadium'), (208, 'Championship', 'St Andrew''s'),
+(209, 'Championship', 'Riverside Stadium'), (210, 'Championship', 'bet365 Stadium'),
+(211, 'La Liga', 'Benito Villamarin'), (212, 'La Liga', 'Anoeta'),
+(213, 'Serie A Italiana', 'Olimpico'), (214, 'Ligue 1', 'Velodrome'),
+(215, 'MLS', 'DRV PNK Stadium'), (216, 'MLS', 'Dignity Health'),
+(217, 'MLS', 'BMO Stadium'), (218, 'MLS', 'Geodis Park'),
+(219, 'Saudi Pro League', 'King Fahd'), (220, 'Saudi Pro League', 'Al-Awwal Park'),
+(221, 'Saudi Pro League', 'King Abdullah'), (222, 'Saudi Pro League', 'King Abdullah'),
+(223, 'Eredivisie', 'Johan Cruyff Arena'), (224, 'Primeira Liga', 'Da Luz'),
+(225, 'Primeira Liga', 'Do Dragao'), (226, 'Super Lig', 'Rams Park');
+
+SET @id_sport = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Sport Recife'), 1);
+SET @id_fla = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Flamengo'), 1);
+SET @id_pal = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Palmeiras'), 1);
+SET @id_san = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Santos'), 1);
+SET @id_bar = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Barcelona'), 1);
+SET @id_rma = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Real Madrid'), 1);
+SET @id_atm = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Atletico de Madrid' OR nome LIKE 'Atl%Madrid%'), 1);
+SET @id_ars = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Arsenal'), 1);
+SET @id_che = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Chelsea'), 1);
+SET @id_liv = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Liverpool'), 1);
+SET @id_mil = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Milan'), 1);
+SET @id_int = IFNULL((SELECT id_equipe FROM Equipe WHERE nome LIKE 'Inter%Mil%' OR nome = 'Inter' LIMIT 1), 1);
+SET @id_juv = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Juventus'), 1);
+SET @id_bay = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Bayern de Munique'), 1);
+SET @id_dor = IFNULL((SELECT id_equipe FROM Equipe WHERE nome = 'Borussia Dortmund'), 1);
+
+INSERT INTO Camisa (id_camisa, modelo, versao, tamanho, preco, ano, quantidade_estoque, fk_id_equipe) VALUES
+(201, 'Principal', 'Torcedor', 'M', 299.90, 2026, 45, @id_sport), (202, 'Reserva', 'Torcedor', 'G', 299.90, 2026, 30, @id_sport),
+(203, 'Alternativa', 'Jogador', 'GG', 399.90, 2026, 20, @id_sport), (204, 'Principal', 'Torcedor', 'P', 279.90, 2024, 25, @id_sport),
+(205, 'Reserva', 'Jogador', 'M', 389.90, 2024, 15, @id_sport), (206, 'Retrô', 'Torcedor', 'G', 259.90, 1987, 50, @id_sport),
+(207, 'Retrô', 'Jogador', 'M', 450.00, 1990, 10, @id_sport), (208, 'Especial', 'Torcedor', 'GG', 320.00, 2008, 12, @id_sport),
+(209, 'Goleiro', 'Torcedor', 'G', 289.90, 2026, 18, @id_sport), (210, 'Treino', 'Torcedor', 'M', 199.90, 2026, 40, @id_sport),
+(211, 'Principal', 'Jogador', 'G', 419.90, 2025, 22, @id_sport), (212, 'Reserva', 'Jogador', 'P', 399.90, 2022, 11, @id_sport),
+(213, 'Alternativa', 'Torcedor', 'M', 289.90, 2020, 30, @id_sport), (214, 'Retrô', 'Torcedor', 'GG', 249.90, 2000, 35, @id_sport),
+(215, 'Principal', 'Torcedor', 'GG', 299.90, 2018, 14, @id_sport), (216, 'Reserva', 'Torcedor', 'M', 279.90, 2015, 20, @id_sport),
+(217, 'Especial', 'Jogador', 'G', 429.90, 2014, 8, @id_sport), (218, 'Retrô', 'Jogador', 'M', 449.90, 1996, 5, @id_sport),
+(219, 'Alternativa', 'Torcedor', 'G', 269.90, 2012, 15, @id_sport), (220, 'Goleiro', 'Jogador', 'GG', 389.90, 2024, 9, @id_sport),
+(221, 'Principal', 'Torcedor', 'M', 299.90, 2026, 25, 201), (222, 'Reserva', 'Jogador', 'G', 389.90, 2026, 15, 201),
+(223, 'Alternativa', 'Torcedor', 'P', 279.90, 2024, 20, 201), (224, 'Principal', 'Torcedor', 'G', 299.90, 2026, 30, 202),
+(225, 'Reserva', 'Torcedor', 'M', 289.90, 2026, 25, 202), (226, 'Especial', 'Jogador', 'GG', 399.90, 1999, 10, 202),
+(227, 'Alternativa', 'Torcedor', 'P', 259.90, 2024, 18, 202), (228, 'Principal', 'Torcedor', 'M', 299.90, 2026, 22, 203),
+(229, 'Reserva', 'Jogador', 'G', 379.90, 2026, 12, 203), (230, 'Retrô', 'Torcedor', 'GG', 249.90, 1996, 15, 203),
+(231, 'Principal', 'Torcedor', 'M', 299.90, 2026, 60, @id_fla), (232, 'Reserva', 'Jogador', 'G', 419.90, 2026, 25, @id_fla),
+(233, 'Alternativa', 'Torcedor', 'P', 289.90, 2025, 40, @id_fla), (234, 'Retrô', 'Jogador', 'M', 499.90, 1981, 10, @id_fla),
+(235, 'Retrô', 'Torcedor', 'GG', 299.90, 2019, 35, @id_fla), (236, 'Goleiro', 'Torcedor', 'G', 279.90, 2026, 20, @id_fla),
+(237, 'Treino', 'Jogador', 'M', 259.90, 2024, 30, @id_fla), (238, 'Especial', 'Torcedor', 'P', 320.00, 2020, 15, @id_fla),
+(239, 'Principal', 'Jogador', 'GG', 419.90, 2022, 22, @id_fla), (240, 'Reserva', 'Torcedor', 'M', 289.90, 2022, 28, @id_fla),
+(241, 'Principal', 'Torcedor', 'G', 299.90, 2026, 50, @id_pal), (242, 'Reserva', 'Jogador', 'M', 419.90, 2026, 20, @id_pal),
+(243, 'Alternativa', 'Torcedor', 'GG', 289.90, 2024, 30, @id_pal), (244, 'Retrô', 'Jogador', 'P', 499.90, 1999, 12, @id_pal),
+(245, 'Retrô', 'Torcedor', 'M', 279.90, 1993, 25, @id_pal), (246, 'Especial', 'Torcedor', 'G', 319.90, 2021, 18, @id_pal),
+(247, 'Goleiro', 'Jogador', 'GG', 389.90, 2026, 15, @id_pal), (248, 'Treino', 'Torcedor', 'M', 199.90, 2026, 40, @id_pal),
+(249, 'Principal', 'Jogador', 'P', 419.90, 2020, 14, @id_pal), (250, 'Reserva', 'Torcedor', 'G', 289.90, 2020, 22, @id_pal),
+(251, 'Principal', 'Torcedor', 'M', 299.90, 2026, 45, @id_san), (252, 'Reserva', 'Jogador', 'G', 419.90, 2026, 18, @id_san),
+(253, 'Alternativa', 'Torcedor', 'P', 289.90, 2024, 25, @id_san), (254, 'Retrô', 'Jogador', 'M', 499.90, 1962, 8, @id_san),
+(255, 'Retrô', 'Torcedor', 'GG', 279.90, 2011, 30, @id_san), (256, 'Especial', 'Torcedor', 'G', 320.00, 2002, 12, @id_san),
+(257, 'Goleiro', 'Torcedor', 'M', 279.90, 2026, 20, @id_san), (258, 'Treino', 'Jogador', 'P', 259.90, 2024, 15, @id_san),
+(259, 'Principal', 'Jogador', 'GG', 419.90, 2015, 11, @id_san), (260, 'Reserva', 'Torcedor', 'M', 289.90, 2018, 22, @id_san),
+(261, 'Principal', 'Torcedor', 'M', 289.90, 2026, 25, 204), (262, 'Reserva', 'Jogador', 'G', 379.90, 2024, 10, 204),
+(263, 'Principal', 'Torcedor', 'G', 299.90, 2026, 30, 205), (264, 'Alternativa', 'Jogador', 'M', 389.90, 2024, 12, 205),
+(265, 'Principal', 'Torcedor', 'M', 289.90, 2026, 20, 206), (266, 'Principal', 'Torcedor', 'G', 349.90, 2026, 40, @id_ars),
+(267, 'Reserva', 'Jogador', 'M', 450.00, 2026, 15, @id_ars), (268, 'Alternativa', 'Torcedor', 'GG', 329.90, 2024, 25, @id_ars),
+(269, 'Retrô', 'Jogador', 'P', 499.90, 2004, 8, @id_ars), (270, 'Especial', 'Torcedor', 'M', 319.90, 2022, 18, @id_ars),
+(271, 'Goleiro', 'Torcedor', 'G', 299.90, 2026, 22, @id_ars), (272, 'Principal', 'Torcedor', 'M', 349.90, 2026, 45, @id_che),
+(273, 'Reserva', 'Jogador', 'G', 450.00, 2026, 20, @id_che), (274, 'Alternativa', 'Torcedor', 'P', 329.90, 2024, 30, @id_che),
+(275, 'Retrô', 'Jogador', 'GG', 499.90, 2012, 10, @id_che), (276, 'Especial', 'Torcedor', 'M', 319.90, 2021, 15, @id_che),
+(277, 'Treino', 'Torcedor', 'G', 249.90, 2026, 35, @id_che), (278, 'Principal', 'Torcedor', 'G', 349.90, 2026, 50, @id_liv),
+(279, 'Reserva', 'Jogador', 'M', 450.00, 2026, 25, @id_liv), (280, 'Alternativa', 'Torcedor', 'GG', 329.90, 2024, 30, @id_liv),
+(281, 'Retrô', 'Jogador', 'P', 499.90, 2005, 12, @id_liv), (282, 'Especial', 'Torcedor', 'M', 319.90, 2019, 20, @id_liv),
+(283, 'Goleiro', 'Torcedor', 'G', 299.90, 2026, 25, @id_liv), (284, 'Principal', 'Torcedor', 'M', 359.90, 2026, 55, 207),
+(285, 'Reserva', 'Jogador', 'G', 469.90, 2026, 28, 207), (286, 'Alternativa', 'Torcedor', 'P', 339.90, 2024, 35, 207),
+(287, 'Retrô', 'Jogador', 'GG', 499.90, 2012, 15, 207), (288, 'Especial', 'Torcedor', 'M', 329.90, 2023, 22, 207),
+(289, 'Treino', 'Jogador', 'G', 299.90, 2026, 40, 207), (290, 'Goleiro', 'Torcedor', 'M', 309.90, 2026, 30, 207),
+(291, 'Principal', 'Torcedor', 'M', 299.90, 2026, 20, 208), (292, 'Reserva', 'Torcedor', 'G', 289.90, 2026, 18, 208),
+(293, 'Alternativa', 'Torcedor', 'P', 279.90, 2024, 15, 208), (294, 'Retrô', 'Jogador', 'GG', 399.90, 2011, 8, 208),
+(295, 'Especial', 'Torcedor', 'M', 269.90, 2020, 12, 208), (296, 'Treino', 'Torcedor', 'G', 199.90, 2026, 25, 208),
+(297, 'Goleiro', 'Torcedor', 'M', 259.90, 2026, 10, 208), (298, 'Principal', 'Torcedor', 'G', 299.90, 2026, 22, 209),
+(299, 'Reserva', 'Jogador', 'M', 389.90, 2026, 14, 209), (300, 'Alternativa', 'Torcedor', 'GG', 279.90, 2024, 16, 209),
+(301, 'Retrô', 'Torcedor', 'P', 269.90, 2004, 10, 209), (302, 'Especial', 'Jogador', 'G', 419.90, 2015, 6, 209),
+(303, 'Treino', 'Torcedor', 'M', 199.90, 2026, 20, 209), (304, 'Goleiro', 'Torcedor', 'G', 259.90, 2026, 12, 209),
+(305, 'Principal', 'Torcedor', 'M', 299.90, 2026, 25, 210), (306, 'Reserva', 'Jogador', 'G', 389.90, 2026, 12, 210),
+(307, 'Alternativa', 'Torcedor', 'P', 279.90, 2024, 18, 210), (308, 'Retrô', 'Torcedor', 'GG', 269.90, 2011, 10, 210),
+(309, 'Treino', 'Torcedor', 'M', 199.90, 2026, 22, 210), (310, 'Goleiro', 'Torcedor', 'G', 259.90, 2026, 15, 210),
+(311, 'Principal', 'Torcedor', 'M', 349.90, 2026, 60, @id_bar), (312, 'Reserva', 'Jogador', 'G', 469.90, 2026, 30, @id_bar),
+(313, 'Alternativa', 'Torcedor', 'P', 329.90, 2025, 45, @id_bar), (314, 'Retrô', 'Jogador', 'GG', 550.00, 2006, 15, @id_bar),
+(315, 'Retrô', 'Torcedor', 'M', 319.90, 2009, 35, @id_bar), (316, 'Retrô', 'Jogador', 'G', 550.00, 2011, 18, @id_bar),
+(317, 'Retrô', 'Torcedor', 'P', 319.90, 2015, 28, @id_bar), (318, 'Especial', 'Torcedor', 'GG', 339.90, 2024, 25, @id_bar),
+(319, 'Especial', 'Jogador', 'M', 489.90, 2020, 12, @id_bar), (320, 'Goleiro', 'Torcedor', 'G', 299.90, 2026, 22, @id_bar),
+(321, 'Treino', 'Jogador', 'M', 289.90, 2026, 40, @id_bar), (322, 'Treino', 'Torcedor', 'GG', 219.90, 2025, 30, @id_bar),
+(323, 'Principal', 'Jogador', 'P', 469.90, 2024, 20, @id_bar), (324, 'Reserva', 'Torcedor', 'M', 329.90, 2024, 35, @id_bar),
+(325, 'Alternativa', 'Jogador', 'G', 450.00, 2022, 14, @id_bar), (326, 'Retrô', 'Torcedor', 'GG', 319.90, 1999, 10, @id_bar),
+(327, 'Principal', 'Torcedor', 'M', 349.90, 2020, 25, @id_bar), (328, 'Reserva', 'Jogador', 'P', 469.90, 2018, 12, @id_bar),
+(329, 'Especial', 'Torcedor', 'G', 339.90, 2016, 20, @id_bar), (330, 'Goleiro', 'Jogador', 'M', 419.90, 2024, 15, @id_bar),
+(331, 'Alternativa', 'Torcedor', 'GG', 329.90, 2019, 18, @id_bar), (332, 'Principal', 'Jogador', 'M', 469.90, 2017, 16, @id_bar),
+(333, 'Reserva', 'Torcedor', 'G', 329.90, 2013, 22, @id_bar), (334, 'Retrô', 'Jogador', 'P', 550.00, 1992, 8, @id_bar),
+(335, 'Treino', 'Torcedor', 'M', 219.90, 2020, 30, @id_bar), (336, 'Principal', 'Torcedor', 'G', 349.90, 2026, 50, @id_rma),
+(337, 'Reserva', 'Jogador', 'M', 469.90, 2026, 25, @id_rma), (338, 'Alternativa', 'Torcedor', 'GG', 329.90, 2024, 35, @id_rma),
+(339, 'Retrô', 'Jogador', 'P', 499.90, 2014, 12, @id_rma), (340, 'Especial', 'Torcedor', 'M', 339.90, 2022, 20, @id_rma),
+(341, 'Principal', 'Torcedor', 'M', 329.90, 2026, 40, @id_atm), (342, 'Reserva', 'Jogador', 'G', 449.90, 2026, 20, @id_atm),
+(343, 'Alternativa', 'Torcedor', 'P', 309.90, 2024, 25, @id_atm), (344, 'Retrô', 'Torcedor', 'GG', 289.90, 2014, 15, @id_atm),
+(345, 'Especial', 'Jogador', 'M', 469.90, 2021, 10, @id_atm), (346, 'Principal', 'Torcedor', 'G', 299.90, 2026, 25, 211),
+(347, 'Reserva', 'Jogador', 'M', 399.90, 2026, 12, 211), (348, 'Principal', 'Torcedor', 'M', 309.90, 2026, 22, 212),
+(349, 'Reserva', 'Torcedor', 'P', 289.90, 2024, 18, 212), (350, 'Alternativa', 'Jogador', 'GG', 419.90, 2022, 10, 212),
+(351, 'Principal', 'Torcedor', 'M', 339.90, 2026, 35, @id_mil), (352, 'Reserva', 'Jogador', 'G', 450.00, 2026, 15, @id_mil),
+(353, 'Retrô', 'Torcedor', 'GG', 319.90, 2007, 20, @id_mil), (354, 'Principal', 'Torcedor', 'G', 339.90, 2026, 35, @id_int),
+(355, 'Reserva', 'Jogador', 'M', 450.00, 2026, 18, @id_int), (356, 'Retrô', 'Torcedor', 'P', 319.90, 2010, 22, @id_int),
+(357, 'Principal', 'Torcedor', 'M', 339.90, 2026, 40, @id_juv), (358, 'Reserva', 'Jogador', 'GG', 450.00, 2026, 15, @id_juv),
+(359, 'Retrô', 'Torcedor', 'G', 319.90, 1996, 20, @id_juv), (360, 'Principal', 'Torcedor', 'M', 319.90, 2026, 25, 213),
+(361, 'Reserva', 'Jogador', 'P', 429.90, 2026, 10, 213), (362, 'Principal', 'Torcedor', 'G', 349.90, 2026, 45, @id_bay),
+(363, 'Reserva', 'Jogador', 'M', 469.90, 2026, 20, @id_bay), (364, 'Principal', 'Torcedor', 'M', 329.90, 2026, 35, @id_dor),
+(365, 'Reserva', 'Jogador', 'GG', 449.90, 2026, 15, @id_dor), (366, 'Principal', 'Torcedor', 'M', 349.90, 2026, 50, 215),
+(367, 'Reserva', 'Jogador', 'G', 469.90, 2026, 25, 215), (368, 'Alternativa', 'Torcedor', 'GG', 329.90, 2025, 30, 215),
+(369, 'Especial', 'Jogador', 'P', 489.90, 2024, 12, 215), (370, 'Treino', 'Torcedor', 'M', 219.90, 2026, 40, 215),
+(371, 'Goleiro', 'Torcedor', 'G', 309.90, 2026, 20, 215), (372, 'Principal', 'Torcedor', 'M', 329.90, 2026, 30, 216),
+(373, 'Reserva', 'Jogador', 'GG', 429.90, 2026, 15, 216), (374, 'Retrô', 'Torcedor', 'G', 299.90, 2007, 22, 216),
+(375, 'Principal', 'Torcedor', 'P', 319.90, 2026, 28, 217), (376, 'Reserva', 'Jogador', 'M', 419.90, 2026, 14, 217),
+(377, 'Alternativa', 'Torcedor', 'G', 289.90, 2024, 20, 217), (378, 'Principal', 'Torcedor', 'M', 299.90, 2026, 25, 218),
+(379, 'Reserva', 'Jogador', 'G', 399.90, 2026, 12, 218), (380, 'Especial', 'Torcedor', 'GG', 279.90, 2022, 18, 218),
+(381, 'Principal', 'Torcedor', 'G', 349.90, 2026, 40, 219), (382, 'Reserva', 'Jogador', 'M', 450.00, 2026, 20, 219),
+(383, 'Alternativa', 'Torcedor', 'P', 319.90, 2024, 25, 219), (384, 'Principal', 'Torcedor', 'M', 349.90, 2026, 45, 220),
+(385, 'Reserva', 'Jogador', 'GG', 450.00, 2026, 22, 220), (386, 'Alternativa', 'Torcedor', 'G', 319.90, 2024, 30, 220),
+(387, 'Principal', 'Torcedor', 'M', 329.90, 2026, 35, 221), (388, 'Reserva', 'Jogador', 'G', 429.90, 2026, 15, 221),
+(389, 'Principal', 'Torcedor', 'P', 329.90, 2026, 30, 222), (390, 'Reserva', 'Jogador', 'M', 429.90, 2026, 14, 222),
+(391, 'Principal', 'Torcedor', 'M', 319.90, 2026, 28, 223), (392, 'Reserva', 'Jogador', 'G', 419.90, 2026, 15, 223),
+(393, 'Retrô', 'Torcedor', 'GG', 299.90, 1995, 20, 223), (394, 'Principal', 'Torcedor', 'G', 309.90, 2026, 35, 224),
+(395, 'Reserva', 'Jogador', 'M', 409.90, 2026, 18, 224), (396, 'Especial', 'Torcedor', 'P', 289.90, 2014, 25, 224),
+(397, 'Principal', 'Torcedor', 'M', 309.90, 2026, 30, 225), (398, 'Reserva', 'Jogador', 'GG', 409.90, 2026, 14, 225),
+(399, 'Principal', 'Torcedor', 'G', 319.90, 2026, 25, 226), (400, 'Reserva', 'Jogador', 'M', 419.90, 2026, 12, 226);
+
+INSERT INTO Camisa_Cor (fk_id_camisa, cor) VALUES
+(201, 'Vermelho'), (201, 'Preto'), (202, 'Amarelo'), (203, 'Rosa'), (204, 'Vermelho'),
+(205, 'Preto'), (206, 'Amarelo'), (207, 'Amarelo'), (208, 'Dourado'), (209, 'Cinza'),
+(210, 'Azul'), (211, 'Vermelho'), (212, 'Branco'), (213, 'Preto'), (214, 'Branco'),
+(215, 'Vermelho'), (216, 'Azul Escuro'), (217, 'Laranja'), (218, 'Verde'), (219, 'Dourado'),
+(220, 'Preto'), (221, 'Amarelo'), (222, 'Preto'), (223, 'Branco'), (224, 'Verde'),
+(225, 'Branco'), (226, 'Verde'), (227, 'Branco'), (228, 'Vermelho'), (229, 'Branco'),
+(230, 'Vermelho'), (231, 'Vermelho'), (231, 'Preto'), (232, 'Branco'), (233, 'Preto'),
+(234, 'Branco'), (235, 'Vermelho'), (236, 'Amarelo'), (237, 'Azul'), (238, 'Preto'),
+(239, 'Vermelho'), (240, 'Branco'), (241, 'Verde'), (242, 'Branco'), (243, 'Verde Claro'),
+(244, 'Verde'), (245, 'Verde Escuro'), (246, 'Dourado'), (247, 'Azul'), (248, 'Branco'),
+(249, 'Verde'), (250, 'Branco'), (251, 'Branco'), (252, 'Preto'), (252, 'Branco'),
+(253, 'Dourado'), (254, 'Branco'), (255, 'Branco'), (256, 'Azul'), (257, 'Verde'),
+(258, 'Cinza'), (259, 'Branco'), (260, 'Preto'), (261, 'Vermelho'), (261, 'Branco'),
+(262, 'Branco'), (263, 'Preto'), (263, 'Branco'), (264, 'Roxo'), (265, 'Vermelho'),
+(265, 'Preto'), (266, 'Vermelho'), (267, 'Amarelo'), (268, 'Azul'), (269, 'Vermelho'),
+(270, 'Preto'), (271, 'Verde'), (272, 'Azul'), (273, 'Branco'), (274, 'Preto'),
+(275, 'Azul'), (276, 'Amarelo'), (277, 'Cinza'), (278, 'Vermelho'), (279, 'Branco'),
+(280, 'Roxo'), (281, 'Vermelho'), (282, 'Preto'), (283, 'Verde'), (284, 'Azul Celeste'),
+(285, 'Preto'), (286, 'Vermelho'), (287, 'Azul Celeste'), (288, 'Branco'), (289, 'Azul Escuro'),
+(290, 'Amarelo'), (291, 'Azul'), (292, 'Branco'), (293, 'Preto'), (294, 'Azul'),
+(295, 'Amarelo'), (296, 'Branco'), (297, 'Verde'), (298, 'Vermelho'), (299, 'Branco'),
+(300, 'Azul'), (301, 'Vermelho'), (302, 'Preto'), (303, 'Cinza'), (304, 'Amarelo'),
+(305, 'Vermelho'), (305, 'Branco'), (306, 'Preto'), (307, 'Azul'), (308, 'Vermelho'),
+(309, 'Branco'), (310, 'Verde'), (311, 'Azul'), (311, 'Grena'), (312, 'Preto'),
+(313, 'Dourado'), (314, 'Azul'), (314, 'Grena'), (315, 'Azul'), (316, 'Azul'),
+(317, 'Azul'), (317, 'Grena'), (318, 'Branco'), (319, 'Preto'), (320, 'Amarelo'),
+(321, 'Azul'), (322, 'Vermelho'), (323, 'Azul'), (324, 'Amarelo'), (325, 'Preto'),
+(326, 'Azul'), (327, 'Azul'), (328, 'Verde Claro'), (329, 'Roxo'), (330, 'Verde'),
+(331, 'Azul Claro'), (332, 'Azul'), (333, 'Laranja'), (334, 'Laranja'), (335, 'Cinza'),
+(336, 'Branco'), (337, 'Laranja'), (338, 'Preto'), (339, 'Branco'), (340, 'Roxo'),
+(341, 'Vermelho'), (341, 'Branco'), (342, 'Azul'), (343, 'Preto'), (344, 'Vermelho'),
+(345, 'Verde'), (346, 'Verde'), (346, 'Branco'), (347, 'Preto'), (348, 'Azul'),
+(348, 'Branco'), (349, 'Preto'), (350, 'Verde'), (351, 'Vermelho'), (351, 'Preto'),
+(352, 'Branco'), (353, 'Branco'), (354, 'Azul'), (354, 'Preto'), (355, 'Branco'),
+(356, 'Preto'), (356, 'Azul'), (357, 'Preto'), (357, 'Branco'), (358, 'Amarelo'),
+(359, 'Azul'), (360, 'Vermelho'), (361, 'Branco'), (362, 'Vermelho'), (363, 'Preto'),
+(364, 'Amarelo'), (365, 'Preto'), (366, 'Rosa'), (367, 'Preto'), (368, 'Branco'),
+(369, 'Verde'), (370, 'Rosa'), (371, 'Azul'), (372, 'Branco'), (373, 'Azul Escuro'),
+(374, 'Amarelo'), (375, 'Preto'), (376, 'Branco'), (377, 'Ouro'), (378, 'Amarelo'),
+(379, 'Preto'), (380, 'Branco'), (381, 'Azul'), (382, 'Branco'), (383, 'Preto'),
+(384, 'Amarelo'), (385, 'Azul'), (386, 'Branco'), (387, 'Amarelo'), (387, 'Preto'),
+(388, 'Branco'), (389, 'Verde'), (390, 'Branco'), (391, 'Branco'), (391, 'Vermelho'),
+(392, 'Azul'), (393, 'Preto'), (394, 'Vermelho'), (395, 'Preto'), (396, 'Branco'),
+(397, 'Azul'), (397, 'Branco'), (398, 'Amarelo'), (399, 'Vermelho'), (399, 'Amarelo'),
+(400, 'Preto');
+
+USE jerseyhub;
+
+UPDATE Clube 
+SET liga = 'Serie A' 
+WHERE fk_id_equipe = 213;
+
+INSERT INTO Camisa (id_camisa, modelo, versao, tamanho, preco, ano, quantidade_estoque, fk_id_equipe) VALUES
+(401, 'Principal', 'Torcedor', 'M', 319.90, 2026, 30, 214),
+(402, 'Reserva', 'Jogador', 'G', 429.90, 2026, 15, 214),
+(403, 'Alternativa', 'Torcedor', 'P', 299.90, 2025, 20, 214),
+(404, 'Retrô', 'Torcedor', 'GG', 289.90, 1993, 25, 214);
+
+INSERT INTO Camisa_Cor (fk_id_camisa, cor) VALUES
+(401, 'Branco'),
+(401, 'Azul Claro'),
+(402, 'Azul Marinho'),
+(403, 'Laranja'),
+(404, 'Branco');
