@@ -87,7 +87,7 @@ public class PainelConsultas extends JPanel {
         } else if ("Clientes Frequentes".equals(selecao)) {
             descricao = "JOIN + COUNT + GROUP BY + HAVING: quantidade de pedidos feitos por cliente.";
         } else if ("Camisas Sem Venda".equals(selecao)) {
-            descricao = "Subconsulta com NOT IN: camisas que nunca apareceram em um pedido.";
+            descricao = "LEFT JOIN + subconsulta com NOT IN: camisas, com a equipe de cada uma, que nunca apareceram em um pedido.";
         } else if ("Ticket Medio".equals(selecao)) {
             descricao = "JOIN + AVG + GROUP BY: valor médio por pedido de cada cliente.";
         } else if ("Camisa Mais Cara".equals(selecao)) {
@@ -128,7 +128,7 @@ public class PainelConsultas extends JPanel {
         } else if ("Clientes Frequentes".equals(selecao)) {
             sql = "SELECT cl.nome AS Cliente, COUNT(p.id_pedido) AS Total_Pedidos FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome HAVING COUNT(p.id_pedido) > 3 ORDER BY Total_Pedidos DESC";
         } else if ("Camisas Sem Venda".equals(selecao)) {
-            sql = "SELECT c.modelo AS Modelo, c.versao AS Versao, c.preco AS Preco FROM Camisa c WHERE c.id_camisa NOT IN (SELECT fk_id_camisa FROM Item_Pedido)";
+            sql = "SELECT COALESCE(e.nome, 'Sem Equipe') AS Equipe, c.modelo AS Modelo, c.versao AS Versao, c.preco AS Preco FROM Camisa c LEFT JOIN Equipe e ON c.fk_id_equipe = e.id_equipe WHERE c.id_camisa NOT IN (SELECT fk_id_camisa FROM Item_Pedido)";
         } else if ("Ticket Medio".equals(selecao)) {
             sql = "SELECT cl.nome AS Cliente, AVG(p.valor_total) AS Ticket_Medio FROM Cliente cl JOIN Pedido p ON cl.id_cliente = p.fk_id_cliente GROUP BY cl.id_cliente, cl.nome ORDER BY Ticket_Medio DESC";
         } else if ("Camisa Mais Cara".equals(selecao)) {
