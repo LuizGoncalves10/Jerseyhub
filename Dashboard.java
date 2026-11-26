@@ -67,19 +67,19 @@ public class Dashboard extends JFrame {
 
         sidebar.add(titulo);
         sidebar.add(subtitulo);
-        sidebar.add(criarItemMenu("Loja", ""));
+        sidebar.add(criarItemMenu("Loja", "shopping-bag.png"));
         sidebar.add(Box.createVerticalStrut(4));
-        sidebar.add(criarItemMenu("Clientes", ""));
+        sidebar.add(criarItemMenu("Clientes", "users.png"));
         sidebar.add(Box.createVerticalStrut(4));
-        sidebar.add(criarItemMenu("Camisas", ""));
+        sidebar.add(criarItemMenu("Camisas", "shirt.png"));
         sidebar.add(Box.createVerticalStrut(4));
-        sidebar.add(criarItemMenu("Funcionarios", ""));
+        sidebar.add(criarItemMenu("Funcionarios", "user-cog.png"));
         sidebar.add(Box.createVerticalStrut(4));
-        sidebar.add(criarItemMenu("Pedidos", ""));
+        sidebar.add(criarItemMenu("Pedidos", "package.png"));
         sidebar.add(Box.createVerticalStrut(4));
-        sidebar.add(criarItemMenu("Consultas", ""));
+        sidebar.add(criarItemMenu("Consultas", "search.png"));
         sidebar.add(Box.createVerticalStrut(4));
-        sidebar.add(criarItemMenu("Estatisticas", ""));
+        sidebar.add(criarItemMenu("Estatisticas", "chart-bar.png"));
         sidebar.add(Box.createVerticalGlue());
 
         for (Component componente : sidebar.getComponents()) {
@@ -94,7 +94,7 @@ public class Dashboard extends JFrame {
 
     private JToggleButton criarItemMenu(String nomeTela, String icone) {
         JToggleButton item = new JToggleButton(nomeTela);
-        item.setIcon(new IconeFonte(icone));
+        item.setIcon(carregarIcone(icone, 18, 18));
         item.setIconTextGap(12);
         item.setHorizontalAlignment(SwingConstants.LEFT);
         item.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -113,28 +113,33 @@ public class Dashboard extends JFrame {
         return item;
     }
 
-    private static class IconeFonte implements Icon {
-        private final String simbolo;
+    private ImageIcon carregarIcone(String nomeArquivo, int largura, int altura) {
+        String caminhoRelativo = "assets/icons/" + nomeArquivo;
 
-        IconeFonte(String simbolo) {
-            this.simbolo = simbolo;
+        java.net.URL recurso = Dashboard.class.getClassLoader().getResource(caminhoRelativo);
+        if (recurso != null) {
+            Image imagem = new ImageIcon(recurso).getImage().getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+            return new ImageIcon(imagem);
         }
 
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setFont(new Font("Segoe MDL2 Assets", Font.PLAIN, 16));
-            g2.setColor(c.getForeground());
-            g2.drawString(simbolo, x, y + 15);
-            g2.dispose();
+        java.io.File diretorioAtual = new java.io.File(System.getProperty("user.dir"));
+        java.io.File[] candidatos = {
+            new java.io.File(diretorioAtual, caminhoRelativo),
+            new java.io.File(diretorioAtual, "Jerseyhub/" + caminhoRelativo),
+            diretorioAtual.getParentFile() != null
+                ? new java.io.File(diretorioAtual.getParentFile(), "Jerseyhub/" + caminhoRelativo)
+                : null
+        };
+
+        for (java.io.File arquivo : candidatos) {
+            if (arquivo != null && arquivo.isFile()) {
+                Image imagem = new ImageIcon(arquivo.getAbsolutePath()).getImage()
+                    .getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+                return new ImageIcon(imagem);
+            }
         }
 
-        @Override
-        public int getIconWidth() { return 18; }
-
-        @Override
-        public int getIconHeight() { return 18; }
+        return null;
     }
 
     public static void main(String[] args) {

@@ -52,8 +52,8 @@ public class PainelLoja extends JPanel {
         JPanel painelOpcoes = new JPanel(new GridLayout(1, 2, 40, 0));
         painelOpcoes.setOpaque(false);
 
-        JPanel cartaoClubes = criarCartaoCategoria("Clubes", "Camisas dos maiores times do mundo", "");
-        JPanel cartaoSelecoes = criarCartaoCategoria("Seleções", "Camisas das seleções nacionais", "");
+        JPanel cartaoClubes = criarCartaoCategoria("Clubes", "Camisas dos maiores times do mundo", "building-stadium.png");
+        JPanel cartaoSelecoes = criarCartaoCategoria("Seleções", "Camisas das seleções nacionais", "world.png");
 
         cartaoClubes.addMouseListener(new MouseAdapter() {
             @Override
@@ -160,9 +160,8 @@ public class PainelLoja extends JPanel {
         ));
         cartao.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        JLabel lblIcone = new JLabel(icone);
-        lblIcone.setFont(new Font("Segoe MDL2 Assets", Font.PLAIN, 72));
-        lblIcone.setForeground(UIUtils.COR_SUCESSO);
+        JLabel lblIcone = new JLabel();
+        lblIcone.setIcon(carregarIcone(icone, 72, 72));
         lblIcone.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel lblTitulo = new JLabel(titulo);
@@ -196,6 +195,35 @@ public class PainelLoja extends JPanel {
         });
 
         return cartao;
+    }
+
+    private ImageIcon carregarIcone(String nomeArquivo, int largura, int altura) {
+        String caminhoRelativo = "assets/icons/" + nomeArquivo;
+
+        java.net.URL recurso = PainelLoja.class.getClassLoader().getResource(caminhoRelativo);
+        if (recurso != null) {
+            Image imagem = new ImageIcon(recurso).getImage().getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+            return new ImageIcon(imagem);
+        }
+
+        java.io.File diretorioAtual = new java.io.File(System.getProperty("user.dir"));
+        java.io.File[] candidatos = {
+            new java.io.File(diretorioAtual, caminhoRelativo),
+            new java.io.File(diretorioAtual, "Jerseyhub/" + caminhoRelativo),
+            diretorioAtual.getParentFile() != null
+                ? new java.io.File(diretorioAtual.getParentFile(), "Jerseyhub/" + caminhoRelativo)
+                : null
+        };
+
+        for (java.io.File arquivo : candidatos) {
+            if (arquivo != null && arquivo.isFile()) {
+                Image imagem = new ImageIcon(arquivo.getAbsolutePath()).getImage()
+                    .getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+                return new ImageIcon(imagem);
+            }
+        }
+
+        return null;
     }
 
     private JPanel criarBotaoSelecao(String pais, String sigla, Color corCirculo, Color corSigla) {
